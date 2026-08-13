@@ -1,5 +1,5 @@
 ---
-name: "company-ui"
+name: "company-ui-for-agents"
 description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强制 AI 使用 CompanyXxx 组件（而非 antd 原生）、遵循品牌令牌 #F95914、遵守类型安全和样式规范。在任何使用 company-ui 的项目中生成 React 代码时必须加载。"
 ---
 
@@ -8,8 +8,6 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 > **版本基准**：`@donglegeyu/company-ui@1.2.34`，基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
->
-> **在线文档**：https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt  |  **LLMs.txt**：https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt  |  **design.md**：https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/design.md
 
 ## 何时调用
 
@@ -324,9 +322,9 @@ function MyComponent() {
   return (
     <div style={{
       color: token.colorPrimary,
-      padding: token.spacing,
-      borderRadius: token.borderRadius,
-      fontSize: token.fontSize,
+      padding: token.spacing,        // 8
+      borderRadius: token.borderRadius, // 6
+      fontSize: token.fontSize,      // 14
     }}>
       品牌色文字
     </div>
@@ -435,6 +433,87 @@ interface StatisticsColumn {
 }
 ```
 
+### 页面骨架组装规则（后台管理系统标准结构）
+
+AI 生成完整后台页面时，**必须使用标准骨架**：`CompanySidebar`（左侧导航）+ `CompanyMultiTabs`（顶部页签栏）+ 内容区。不允许只生成内容区而遗漏骨架。
+
+```tsx
+import { useState } from 'react';
+import { CompanySidebar, CompanyMultiTabs, SmartListTemplate } from '@donglegeyu/company-ui';
+import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, MultiTabItem } from '@donglegeyu/company-ui';
+
+export function AdminPage() {
+  const [activeTabKey, setActiveTabKey] = useState('user-list');
+
+  return (
+    <div style={{ display: 'flex', height: '100vh' }}>
+      {/* 左侧导航 */}
+      <CompanySidebar
+        domains={domains}
+        currentDomainId={currentDomainId}
+        onDomainChange={handleDomainChange}
+        userInfo={userInfo}
+        firstMenus={firstMenus}
+        systemBottomMenus={systemMenus}
+        businessMenus={businessMenus}
+        secondMenus={secondMenus}
+        customNavMenus={customNavMenus}
+        onCustomNavUpdate={handleCustomNavUpdate}
+        favorites={favorites}
+        onAddFavorite={handleAddFavorite}
+        onRemoveFavorite={handleRemoveFavorite}
+        onFavoritesReorder={handleFavoritesReorder}
+        activeFirstMenu={activeFirstMenu}
+        activeKey={activeMenuKey}
+        onFirstMenuSelect={handleFirstMenuSelect}
+        onMenuClick={handleMenuClick}
+        expandedKeys={expandedKeys}
+        onExpandedKeysChange={setExpandedKeys}
+        secondSidebarFixed={secondFixed}
+        onSecondSidebarFixedChange={setSecondFixed}
+      />
+
+      {/* 右侧内容区 */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* 顶部多页签栏 */}
+        <CompanyMultiTabs
+          tabs={tabs}
+          activeKey={activeTabKey}
+          onChange={(key) => setActiveTabKey(key)}
+          onClose={handleTabClose}
+        />
+
+        {/* 内容区：按页面类型选择业务模板 */}
+        <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+          <SmartListTemplate fields={fields} fetchData={fetchData} />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+#### 内容区页面类型选择
+
+| 页面类型 | 使用组件 | 典型场景 |
+|---|---|---|
+| 列表页 | `SmartListTemplate` | 用户管理 / 订单列表 / 数据查询 |
+| 统计列表页 | `StatisticsListPage` | 仪表盘 / 运营数据 / 报表 |
+| 表单页 | `FormPageTemplate` | 新建 / 编辑 / 配置 |
+| 详情页 | `DetailPageTemplate` | 用户详情 / 订单详情 |
+
+#### 关键 Props 速查
+
+```ts
+// CompanySidebar 必填 Props
+interface SidebarDomain { id: number | string; name: string; }
+interface SidebarMenuItem { key: string; label: string; icon?: React.ReactNode; children?: SidebarMenuItem[]; }
+interface SidebarUserInfo { name: string; avatar?: string; }
+
+// CompanyMultiTabs 必填 Props
+interface MultiTabItem { key: string; label: React.ReactNode; path?: string; closable?: boolean; }
+```
+
 ---
 
 ## 六、高频反模式（AI 最容易犯的 10 个错）
@@ -470,6 +549,7 @@ import {
   CompanyForm,
   CompanyTag,
   CompanySpace,
+  // ... 其他 CompanyXxx
 } from '@donglegeyu/company-ui';
 
 // 共享组件
@@ -535,3 +615,16 @@ import { Space, Tag, Form, Row, Col, theme } from 'antd';
 - [ ] 无硬编码颜色
 - [ ] 无 `!important`
 - [ ] 无默认导出
+
+---
+
+## 九、与已有 Skill 的关系
+
+| Skill | 定位 | 何时用 |
+|---|---|---|
+| `company-ui-for-agents`（本 Skill） | 组件库消费总入口，规则基座 | 任何使用 company-ui 的代码生成 |
+| `pc-prototype-builder` | PC 原型一键生成 | 快速搭建后台系统原型 |
+| `smart-list-template-builder` | 智能列表页还原 | 1:1 还原标准列表页 |
+| `dumi-theme-customizer` | Dumi 主题定制 | 修改文档站点样式 |
+
+本 Skill 是其他三个 Skill 的规则基础——`pc-prototype-builder` 和 `smart-list-template-builder` 的代码生成规则均源自本 Skill 的五条红线和组件清单。
