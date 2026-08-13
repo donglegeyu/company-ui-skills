@@ -21,7 +21,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 ---
 
-## 一、五条红线（违反即不合格）
+## 一、六条红线（违反即不合格）
 
 ### 1. 禁止使用 antd 原生组件
 
@@ -92,6 +92,27 @@ export function MyComponent() { ... }
 // 或
 export const MyComponent = () => { ... };
 ```
+
+### 6. 业务模板组件优先于基础组件
+
+AI 在生成页面时，必须优先使用业务模板组件，仅在业务模板无法满足时才退回到共享组件，最后才用基础组件手动拼装。
+
+```tsx
+// ❌ 错误：用基础组件手动拼列表页
+import { CompanyTable, CompanyPagination, CompanyButton } from '@donglegeyu/company-ui';
+<CompanyTable columns={cols} dataSource={data} />
+<CompanyPagination total={total} />
+
+// ✅ 正确：用业务模板组件一步到位
+import { SmartListTemplate } from '@donglegeyu/company-ui';
+<SmartListTemplate fields={fields} fetchData={fetchData} />
+```
+
+| 优先级 | 组件层 | 示例 | 何时使用 |
+|---|---|---|---|
+| 1（最高） | 业务模板 | `SmartListTemplate` / `FormPageTemplate` / `DetailPageTemplate` / `StatisticsListPage` | 标准列表页 / 表单页 / 详情页 / 统计页 |
+| 2 | 共享组件 | `ActionCell` / `BaseInfoForm` / `PageTitle` / `SectionTitle` | 业务模板不覆盖的局部场景 |
+| 3（最低） | 基础组件 | `CompanyTable` / `CompanyForm` / `CompanyButton` | 基础组件无法满足时的手动拼装 |
 
 ---
 
