@@ -9,7 +9,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
 >
-> **在线文档**：https://nrpdemo.zrhsh.com  |  **LLMs.txt**：https://nrpdemo.zrhsh.com/llms.txt  |  **design.md**：https://nrpdemo.zrhsh.com/design.md
+> **在线文档**：https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt  |  **LLMs.txt**：https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt  |  **design.md**：https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/design.md
 
 ## 何时调用
 

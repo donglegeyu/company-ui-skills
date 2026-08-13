@@ -1,0 +1,204 @@
+# @donglegeyu/company-ui
+
+> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 14 shared components, 9 business template components. Unified brand tokens, strict usage rules.
+
+## Installation
+
+```bash
+npm install @donglegeyu/company-ui
+```
+
+Peer dependencies: `antd >=6.0.0`, `react >=16.8.0`, `@ant-design/icons >=5.0.0`.
+
+## Minimal Setup
+
+```tsx
+import React from 'react';
+import { ThemeProvider, CompanyButton } from '@donglegeyu/company-ui';
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <CompanyButton type="primary">Brand Button</CompanyButton>
+    </ThemeProvider>
+  );
+}
+```
+
+## Critical Rules for AI Agents
+
+1. NEVER use antd native components directly. Always use CompanyXxx (e.g. CompanyButton, not Button).
+2. NEVER hardcode colors. Use theme.useToken() or designRules constants.
+3. NEVER use !important in styles. Use ConfigProvider component-level overrides.
+4. NEVER use any type. Define explicit TypeScript interfaces.
+5. NEVER use default exports. Always use named exports.
+6. Import from @donglegeyu/company-ui, not from antd (except: Space, Tag, Form, Row, Col, Popover, Menu, App — these have no Company wrapper).
+
+## Design Tokens
+
+- Brand Primary: #F95914 (vitality orange)
+- Disabled Background: #f5f5f5 (pure gray, no blue tint)
+- Border Radius: 6px (base)
+- Control Height: 32px (base)
+- Font Size: 14px (base)
+- Full design language: /design.md
+
+## Component List
+
+### Basic Components — General
+
+- [按钮 Button](/antd-components/general/companybutton): Primary action trigger, 5 variants (primary/default/dashed/text/link)
+- [悬浮按钮 FloatButton](/antd-components/general/companyfloatbutton): Floating action button for page-level operations
+- [图标 Icon](/antd-components/general/companyicon): Semantic SVG icon component
+- [排版 Typography](/antd-components/general/companytypography): Text display with title/paragraph/text/link
+
+### Basic Components — Layout
+
+- [分割线 Divider](/antd-components/layout/companydivider): Section separator
+- [弹性布局 Flex](/antd-components/layout/companyflex): Flexible box layout
+- [栅格行 Row](/antd-components/layout/companyrow): Grid row
+- [栅格列 Col](/antd-components/layout/companycol): Grid column
+- [布局 Layout](/antd-components/layout/companylayout): Page layout container (Header/Sider/Content/Footer)
+- [瀑布流 Masonry](/antd-components/layout/companymasonry): Masonry grid layout
+- [间距 Space](/antd-components/layout/companyspace): Vertical/horizontal spacing between elements
+- [分隔面板 Splitter](/antd-components/layout/companysplitter): Resizable split panels
+
+### Basic Components — Navigation
+
+- [锚点 Anchor](/antd-components/navigation/companyanchor): Anchor navigation
+- [面包屑 Breadcrumb](/antd-components/navigation/companybreadcrumb): Breadcrumb navigation
+- [下拉菜单 Dropdown](/antd-components/navigation/companydropdown): Dropdown menu
+- [导航菜单 Menu](/antd-components/navigation/companymenu): Navigation menu
+- [分页 Pagination](/antd-components/navigation/companypagination): Page navigation
+- [步骤条 Steps](/antd-components/navigation/companysteps): Step progress indicator
+- [标签页 Tabs](/antd-components/navigation/companytabs): Tab navigation
+
+### Basic Components — Data Entry
+
+- [自动完成 AutoComplete](/antd-components/data-entry/companyautocomplete): Autocomplete input
+- [级联选择 Cascader](/antd-components/data-entry/companycascader): Cascade selection
+- [多选框 Checkbox](/antd-components/data-entry/companycheckbox): Multiple choice
+- [颜色选择器 ColorPicker](/antd-components/data-entry/companycolorpicker): Color picker
+- [日期选择框 DatePicker](/antd-components/data-entry/companydatepicker): Date picker
+- [表单 Form](/antd-components/data-entry/companyform): Form container with validation
+- [输入框 Input](/antd-components/data-entry/companyinput): Text input
+- [数字输入框 InputNumber](/antd-components/data-entry/companyinputnumber): Numeric input
+- [提及 Mentions](/antd-components/data-entry/companymentions): Mention input
+- [单选框 Radio](/antd-components/data-entry/companyradio): Single choice
+- [评分 Rate](/antd-components/data-entry/companyrate): Star rating
+- [选择器 Select](/antd-components/data-entry/companyselect): Dropdown selector
+- [滑动输入条 Slider](/antd-components/data-entry/companyslider): Slide input
+- [开关 Switch](/antd-components/data-entry/companyswitch): Toggle switch
+- [时间选择框 TimePicker](/antd-components/data-entry/companytimepicker): Time picker
+- [穿梭框 Transfer](/antd-components/data-entry/companytransfer): Transfer list
+- [树选择 TreeSelect](/antd-components/data-entry/companytreeselect): Tree selection
+- [上传 Upload](/antd-components/data-entry/companyupload): File upload
+
+### Basic Components — Data Display
+
+- [头像 Avatar](/antd-components/data-display/companyavatar): User avatar
+- [徽标数 Badge](/antd-components/data-display/companybadge): Count badge
+- [日历 Calendar](/antd-components/data-display/companycalendar): Calendar
+- [卡片 Card](/antd-components/data-display/companycard): Content card
+- [走马灯 Carousel](/antd-components/data-display/companycarousel): Image carousel
+- [折叠面板 Collapse](/antd-components/data-display/companycollapse): Collapsible panels
+- [描述列表 Descriptions](/antd-components/data-display/companydescriptions): Key-value description list
+- [空状态 Empty](/antd-components/data-display/companyempty): Empty state placeholder
+- [图片 Image](/antd-components/data-display/companyimage): Image with preview
+- [列表 List](/antd-components/data-display/companylist): List display
+- [气泡卡片 Popover](/antd-components/data-display/companypopover): Popover card
+- [二维码 QRCode](/antd-components/data-display/companyqrcode): QR code
+- [分段控制器 Segmented](/antd-components/data-display/companysegmented): Segmented control
+- [统计数值 Statistic](/antd-components/data-display/companystatistic): Statistic display
+- [表格 Table](/antd-components/data-display/companytable): Data table with sorting/filtering/pagination
+- [标签 Tag](/antd-components/data-display/companytag): Status tag
+- [时间轴 Timeline](/antd-components/data-display/companytimeline): Timeline
+- [文字提示 Tooltip](/antd-components/data-display/companytooltip): Tooltip
+- [漫游式引导 Tour](/antd-components/data-display/companytour): Guided tour
+- [树形控件 Tree](/antd-components/data-display/companytree): Tree view
+
+### Basic Components — Feedback
+
+- [警告提示 Alert](/antd-components/feedback/companyalert): Alert message
+- [抽屉 Drawer](/antd-components/feedback/companydrawer): Side drawer
+- [全局提示 Message](/antd-components/feedback/companymessage): Global toast message
+- [对话框 Modal](/antd-components/feedback/companymodal): Modal dialog
+- [通知提醒框 Notification](/antd-components/feedback/companynotification): Notification
+- [气泡确认框 Popconfirm](/antd-components/feedback/companypopconfirm): Confirmation popover
+- [进度条 Progress](/antd-components/feedback/companyprogress): Progress bar
+- [结果 Result](/antd-components/feedback/companyresult): Result page
+- [骨架屏 Skeleton](/antd-components/feedback/companyskeleton): Loading skeleton
+- [加载中 Spin](/antd-components/feedback/companyspin): Loading spinner
+- [水印 Watermark](/antd-components/feedback/companywatermark): Watermark
+
+### Basic Components — Other
+
+- [固钉 Affix](/antd-components/other/companyaffix): Fixed positioning
+- [包裹组件 App](/antd-components/other/companyapp): App context wrapper
+- [边框流光 BorderBeam](/antd-components/other/companyborderbeam): Animated border beam
+- [全局化配置 ConfigProvider](/antd-components/other/companyconfigprovider): Global config provider
+
+### Shared Components
+
+- [操作按钮组 ActionCell](/template-components/action-cell): Table action column with auto-collapse
+- [多列表单 BaseInfoForm](/template-components/base-info-form): Multi-column form with field config
+- [色阶 ColorScale](/template-components/color-scale): Color gradient picker
+- [省略文本 EllipsisText](/template-components/ellipsis-text): Text overflow with tooltip
+- [底部操作栏 FormFooterActions](/template-components/form-footer-actions): Sticky form footer
+- [视图保存抽屉 FilterOptionsDrawer](/template-components/filter-options-drawer): Filter view drawer
+- [页面标题 PageTitle](/template-components/page-title): Page header
+- [分组标题 SectionTitle](/template-components/section-title): Section divider title
+- [无障碍检查 AccessibilityChecker](/template-components/accessibility-checker): Accessibility audit
+
+### Template Components — Page Level
+
+- [统计列表页 StatisticsListPage](/template-components/statistics-list-page): Stat cards + advanced filter + table
+- [智能列表模板 SmartListTemplate](/template-components/smart-list-template): Filter + table + pagination + column settings + view switching
+- [表单页模板 FormPageTemplate](/template-components/form-page-template): Grouped multi-column form + footer actions
+- [详情页模板 DetailPageTemplate](/template-components/detail-page-template): Info card + tags + multi-tab
+- [侧边导航 Sidebar](/template-components/company-sidebar): Dual-layer navigation sidebar
+- [多页签栏 MultiTabs](/template-components/multi-tabs): Browser-style tab bar
+
+### Template Components — Embedded
+
+- [筛选表单 FilterForm](/template-components/filter-form): Standalone filter form
+- [列设置面板 ColumnSettingsPanel](/template-components/column-settings-panel): Column visibility/order settings
+- [图标选择器 IconSelect](/template-components/icon-select): Icon picker with search
+
+## Key Data Contracts
+
+```ts
+// Standard API pagination response
+interface PageResponse<T> {
+  list: T[];       // NOT 'records' or 'dataList'
+  total: number;
+  pageNum: number;
+  pageSize: number;
+}
+
+// SmartListTemplate field definition
+interface FieldDefinition {
+  key: string;
+  label: string;
+  type?: 'input' | 'select' | 'date' | 'daterange' | 'item';
+  options?: { label: string; value: string | number }[];
+  width?: number;
+  hideInFilter?: boolean;
+  sortable?: boolean;
+}
+
+// Column settings
+interface ColumnField {
+  key: string;
+  label: string;
+  visible: boolean;
+  width?: number;
+  fixed?: 'left' | 'right';
+}
+```
+
+## Full Documentation
+
+- [Complete component docs (llms-full.txt)](/llms-full.txt): All 90+ component docs merged into one file
+- [Design language (design.md)](/design.md): Brand tokens, color system, component archetypes
+- [For Agents guide](/for-agents): AI integration guide with prompt, Skill, and MCP setup

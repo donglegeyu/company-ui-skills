@@ -20,8 +20,8 @@ This Skill ensures AI coding agents (Trae, Cursor, Claude Code, Copilot, etc.) c
 ## Documentation
 
 - **Online docs**: https://nrpdemo.zrhsh.com
-- **LLMs.txt**: https://nrpdemo.zrhsh.com/llms.txt
-- **design.md**: https://nrpdemo.zrhsh.com/design.md
+- **LLMs.txt**: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt
+- **design.md**: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/design.md
 
 ## Structure
 
