@@ -516,7 +516,7 @@ interface MultiTabItem { key: string; label: React.ReactNode; path?: string; clo
 
 ---
 
-## 六、高频反模式（AI 最容易犯的 10 个错）
+## 六、高频反模式（AI 最容易犯的 12 个错）
 
 | # | 反模式 | 正确做法 |
 |---|---|---|
@@ -530,6 +530,8 @@ interface MultiTabItem { key: string; label: React.ReactNode; path?: string; clo
 | 8 | `Space direction="vertical"` | `Space orientation="vertical"`（antd 6 废弃 `direction`） |
 | 9 | `size="middle"` | `size="medium"`（antd 6 默认值改为 `medium`） |
 | 10 | 忘记 `ThemeProvider` 包裹 | 入口必须 `<ThemeProvider><App /></ThemeProvider>` |
+| 11 | 凭记忆写 props 名称 | 涉及业务模板组件（`SmartListTemplate`/`CompanySidebar`/`StatisticsListPage` 等）时，**先查阅组件库类型定义**（`@donglegeyu/company-ui/dist/index.d.ts`）确认 props 名称，避免因版本差异导致 prop 拼写错误（如 `SidebarDomain` 实际字段是 `domainName` 而非 `name`） |
+| 12 | 手动拼装 Filter + Table + Pagination | **禁止手动拼装列表页**！用 `SmartListTemplate` 一行搞定。也别用 `<CompanyInput placeholder="用户名：">` 当筛选项——placeholder 不是 label，用 `FieldDefinition.label` |
 
 ---
 
@@ -615,6 +617,7 @@ import { Space, Tag, Form, Row, Col, theme } from 'antd';
 - [ ] 无硬编码颜色
 - [ ] 无 `!important`
 - [ ] 无默认导出
+- [ ] 业务模板组件 props 已查阅类型定义确认（而非凭记忆）
 
 ---
 

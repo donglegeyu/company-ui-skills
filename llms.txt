@@ -16,7 +16,7 @@ Peer dependencies: `antd >=6.0.0`, `react >=16.8.0`, `@ant-design/icons >=5.0.0`
 import React from 'react';
 import { ThemeProvider, CompanyButton } from '@donglegeyu/company-ui';
 
-export default function App() {
+export function App() {
   return (
     <ThemeProvider>
       <CompanyButton type="primary">Brand Button</CompanyButton>
@@ -31,8 +31,45 @@ export default function App() {
 2. NEVER hardcode colors. Use theme.useToken() or designRules constants.
 3. NEVER use !important in styles. Use ConfigProvider component-level overrides.
 4. NEVER use any type. Define explicit TypeScript interfaces.
-5. NEVER use default exports. Always use named exports.
-6. Import from @donglegeyu/company-ui, not from antd (except: Space, Tag, Form, Row, Col, Popover, Menu, App — these have no Company wrapper).
+5. NEVER use default exports. Always use named exports (export function / export const).
+6. ALWAYS prioritize business template components over basic components. For a list page, use SmartListTemplate — do NOT manually assemble CompanyTable + CompanyPagination + CompanyForm. For form pages, use FormPageTemplate. For detail pages, use DetailPageTemplate.
+
+### Allowed antd native components (no Company wrapper exists):
+
+`Space`, `Tag`, `Form`, `Row`, `Col`, `Popover`, `Menu`, `App`, `theme` (useToken only), `ConfigProvider` (local overrides only).
+
+### Template priority order (highest first):
+
+1. **Business templates**: SmartListTemplate / FormPageTemplate / DetailPageTemplate / StatisticsListPage — one-shot page solutions
+2. **Shared components**: ActionCell / BaseInfoForm / PageTitle / SectionTitle / FormFooterActions — reusable business-level pieces
+3. **Basic components**: CompanyTable / CompanyForm / CompanyButton — manual assembly only when templates can't cover the use case
+
+## SmartListTemplate — Minimal Example
+
+```tsx
+import { SmartListTemplate } from '@donglegeyu/company-ui';
+import type { FieldDefinition } from '@donglegeyu/company-ui';
+
+const fields: FieldDefinition[] = [
+  { key: 'username', label: '用户名', type: 'input' },
+  { key: 'status', label: '状态', type: 'select', options: [
+    { label: '已启用', value: 'enabled' },
+    { label: '已禁用', value: 'disabled' },
+  ]},
+  { key: 'createTime', label: '创建时间', type: 'daterange' },
+  { key: 'action', label: '操作', type: 'item', width: 180 },
+];
+
+// SmartListTemplate handles: filter form + table + pagination + column settings + view switching
+export function UserListPage() {
+  return <SmartListTemplate fields={fields} fetchData={fetchUsers} />;
+}
+```
+
+⚠️ **Common AI mistakes to avoid**:
+- DON'T use `<CompanyInput placeholder="用户名：">` — placeholder is NOT a label. Use FieldDefinition.label or Form.Item label.
+- DON'T build `<CompanyTable columns={...} dataSource={...} />` + `<CompanyPagination />` + filter form manually — use SmartListTemplate.
+- DON'T use `data.records` — PageResponse field is `data.list`.
 
 ## Design Tokens
 
@@ -128,7 +165,7 @@ export default function App() {
 - [进度条 Progress](/antd-components/feedback/companyprogress): Progress bar
 - [结果 Result](/antd-components/feedback/companyresult): Result page
 - [骨架屏 Skeleton](/antd-components/feedback/companyskeleton): Loading skeleton
-- [加载中 Spin](/antd-components/feedback/companyspin): Loading spinner
+- [加载中 Spin](/antd-components/feedback/companyskeleton): Loading spinner
 - [水印 Watermark](/antd-components/feedback/companywatermark): Watermark
 
 ### Basic Components — Other
@@ -150,10 +187,10 @@ export default function App() {
 - [分组标题 SectionTitle](/template-components/section-title): Section divider title
 - [无障碍检查 AccessibilityChecker](/template-components/accessibility-checker): Accessibility audit
 
-### Template Components — Page Level
+### Template Components — Page Level (USE THESE FIRST)
 
+- [智能列表模板 SmartListTemplate](/template-components/smart-list-template): ⭐ **PREFERRED** — Filter + table + pagination + column settings + view switching (one-shot list page)
 - [统计列表页 StatisticsListPage](/template-components/statistics-list-page): Stat cards + advanced filter + table
-- [智能列表模板 SmartListTemplate](/template-components/smart-list-template): Filter + table + pagination + column settings + view switching
 - [表单页模板 FormPageTemplate](/template-components/form-page-template): Grouped multi-column form + footer actions
 - [详情页模板 DetailPageTemplate](/template-components/detail-page-template): Info card + tags + multi-tab
 - [侧边导航 Sidebar](/template-components/company-sidebar): Dual-layer navigation sidebar
@@ -176,10 +213,10 @@ interface PageResponse<T> {
   pageSize: number;
 }
 
-// SmartListTemplate field definition
+// SmartListTemplate field definition — drives both filter form AND table columns
 interface FieldDefinition {
   key: string;
-  label: string;
+  label: string;       // renders as proper form label (NOT placeholder!)
   type?: 'input' | 'select' | 'date' | 'daterange' | 'item';
   options?: { label: string; value: string | number }[];
   width?: number;

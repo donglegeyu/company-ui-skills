@@ -6,11 +6,12 @@
 > Do not edit manually — edit the source .md files and re-run the script.
 >
 > Critical rules for AI agents:
-> 1. NEVER use antd native components. Always use CompanyXxx (e.g. CompanyButton, not Button).
+> 1. NEVER use antd native components directly. Always use CompanyXxx (e.g. CompanyButton, not Button).
 > 2. NEVER hardcode colors. Use theme.useToken() or designRules constants.
 > 3. NEVER use !important in styles.
 > 4. NEVER use any type. Define explicit TypeScript interfaces.
-> 5. Import from @donglegeyu/company-ui, not from antd directly.
+> 5. NEVER use default exports. Always use named exports (export function / export const).
+> 6. ALWAYS prioritize business template components over basic components. For list pages use SmartListTemplate, not manual CompanyTable + CompanyPagination assembly.
 
 
 

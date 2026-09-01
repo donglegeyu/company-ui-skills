@@ -30,7 +30,7 @@ import React from 'react';
 import { ThemeProvider } from '@donglegeyu/company-ui';
 import { CompanyButton } from '@donglegeyu/company-ui';
 
-export default function App() {
+export function App() {
   return (
     <ThemeProvider>
       <CompanyButton type="primary">Brand Button</CompanyButton>
