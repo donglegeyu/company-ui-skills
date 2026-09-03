@@ -1,6 +1,6 @@
 # @donglegeyu/company-ui
 
-> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 14 shared components, 9 business template components. Unified brand tokens, strict usage rules.
+> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 14 shared components, 10 business template components. Unified brand tokens, strict usage rules.
 
 ## Installation
 
@@ -32,7 +32,7 @@ export function App() {
 3. NEVER use !important in styles. Use ConfigProvider component-level overrides.
 4. NEVER use any type. Define explicit TypeScript interfaces.
 5. NEVER use default exports. Always use named exports (export function / export const).
-6. ALWAYS prioritize business template components over basic components. For a list page, use SmartListTemplate — do NOT manually assemble CompanyTable + CompanyPagination + CompanyForm. For form pages, use FormPageTemplate. For detail pages, use DetailPageTemplate.
+6. ALWAYS prioritize business template components over basic components. For the admin skeleton (sidebar + tabs + content), use AdminLayoutTemplate. For a list page, use SmartListTemplate — do NOT manually assemble CompanyTable + CompanyPagination + CompanyForm. For form pages, use FormPageTemplate. For detail pages, use DetailPageTemplate.
 
 ### Allowed antd native components (no Company wrapper exists):
 
@@ -40,7 +40,7 @@ export function App() {
 
 ### Template priority order (highest first):
 
-1. **Business templates**: SmartListTemplate / FormPageTemplate / DetailPageTemplate / StatisticsListPage — one-shot page solutions
+1. **Business templates**: AdminLayoutTemplate (admin skeleton) / SmartListTemplate (list) / FormPageTemplate (form) / DetailPageTemplate (detail) / StatisticsListPage — one-shot page solutions
 2. **Shared components**: ActionCell / BaseInfoForm / PageTitle / SectionTitle / FormFooterActions — reusable business-level pieces
 3. **Basic components**: CompanyTable / CompanyForm / CompanyButton — manual assembly only when templates can't cover the use case
 
@@ -189,6 +189,7 @@ export function UserListPage() {
 
 ### Template Components — Page Level (USE THESE FIRST)
 
+- [布局模板 AdminLayoutTemplate](/template-components/admin-layout-template): ⭐ **PREFERRED FOR SKELETON** — Sidebar + tabs + content in one component (tab state / menu sync / spacing contract all managed internally)
 - [智能列表模板 SmartListTemplate](/template-components/smart-list-template): ⭐ **PREFERRED** — Filter + table + pagination + column settings + view switching (one-shot list page)
 - [统计列表页 StatisticsListPage](/template-components/statistics-list-page): Stat cards + advanced filter + table
 - [表单页模板 FormPageTemplate](/template-components/form-page-template): Grouped multi-column form + footer actions
@@ -233,6 +234,135 @@ interface ColumnField {
   fixed?: 'left' | 'right';
 }
 ```
+
+
+## AdminLayoutTemplate — Admin Skeleton (USE THIS FIRST)
+
+The admin skeleton (left sidebar + top tabs + content area) is FIXED into ONE component.
+Do NOT manually assemble CompanySidebar + CompanyMultiTabs — tab state, menu highlight sync,
+and the spacing contract are all managed internally.
+
+### Core Props (~7 required for a working skeleton)
+
+| Prop | Type | Required | Notes |
+|---|---|---|---|
+| logo | string | YES | Logo image path, e.g. "/logo-dl.svg" |
+| brandName | string | YES | Brand name, e.g. "物资管理系统" |
+| domains | SidebarDomain[] | YES | Business domain dropdown data |
+| businessMenus | SidebarMenuItem[] | YES | Full business menu tree (drives "more apps" drawer + second-level menu) |
+| userInfo | SidebarUserInfo | YES | User info card (bottom-left) |
+| onLogout | () => void | YES | Logout callback |
+| pages | AdminLayoutPageItem[] | YES* | Page config: key/label/component — clicking a menu auto-opens tab and renders component |
+| onDomainChange | (domain: SidebarDomain) => void | recommended | Domain switch callback (re-fetch menus here) |
+
+Advanced props (tabs / activeTabKey / defaultActiveKey / favorites / customNavMenus...) are all OPTIONAL —
+the component manages tab state internally: clicking a menu opens/activates a tab automatically,
+closing a tab switches to the neighbor. Pass controlled props only when you need routing sync.
+
+### Minimal Admin Skeleton Example
+
+```tsx
+import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage } from '@donglegeyu/company-ui';
+import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, FieldDefinition } from '@donglegeyu/company-ui';
+
+const domains: SidebarDomain[] = [{ id: 1, domainName: '华东大区' }];
+const userInfo: SidebarUserInfo = { id: 1, username: 'admin', nickname: '系统管理员' };
+const businessMenus: SidebarMenuItem[] = [
+  { key: 'user', label: '用户管理', icon: 'user', children: [
+    { key: 'user-list', label: '用户列表', path: '/user/list' },
+  ] },
+];
+const fields: FieldDefinition[] = [
+  { key: 'username', label: '用户名', type: 'input' },
+  { key: 'action', label: '操作', type: 'item', width: 180 },
+];
+
+export function AdminPage() {
+  return (
+    <AdminLayoutTemplate
+      style={{ height: '100vh' }}
+      logo="/logo-dl.svg"
+      brandName="物资管理系统"
+      domains={domains}
+      businessMenus={businessMenus}
+      userInfo={userInfo}
+      onLogout={() => CompanyMessage.info('退出登录')}
+      onDomainChange={(d) => console.log('switch domain', d.domainName)}
+      pages={[
+        { key: 'user-list', label: '用户列表', path: '/user/list',
+          component: <SmartListTemplate title="用户列表" fields={fields} dataSource={[]} /> },
+      ]}
+    />
+  );
+}
+```
+
+That is ALL. No manual tab state, no menu highlight sync, no content wrapper —
+the zero-spacing content wrapper is built into the component.
+
+### Data Contracts (used by AdminLayoutTemplate props)
+
+#### SidebarDomain
+```ts
+interface SidebarDomain {
+  id: number | string;
+  domainName: string;   // WARNING: field is 'domainName', NOT 'name'!
+}
+```
+
+#### SidebarMenuItem (used for businessMenus / firstMenus / systemBottomMenus)
+```ts
+interface SidebarMenuItem {
+  key: string;
+  label: string;
+  path?: string;
+  icon?: string;         // SvgIcon sprite name, e.g. 'home' / 'box' / 'setting'
+  iconNode?: React.ReactNode;
+  children?: SidebarMenuItem[];
+}
+```
+
+#### SidebarUserInfo
+```ts
+interface SidebarUserInfo {
+  id?: number | string;
+  username?: string;
+  nickname?: string;
+  realName?: string;
+  avatar?: string;
+}
+```
+
+#### SidebarFavoriteItem
+```ts
+interface SidebarFavoriteItem {
+  menuKey: string;
+  menuLabel: string;
+  menuPath?: string;
+  sort?: number;
+}
+```
+
+#### MultiTabItem
+```ts
+interface MultiTabItem {
+  key: string;
+  label: React.ReactNode;
+  path?: string;
+  closable?: boolean;
+  disabled?: boolean;
+}
+```
+
+WARNING: Common AI mistakes when generating admin skeleton:
+- Manually assembling CompanySidebar + CompanyMultiTabs -> use AdminLayoutTemplate instead. Manual assembly is ADVANCED usage only (when you need fully custom layout).
+- Missing `logo` and `brandName` props -> top-left area renders blank
+- Missing `domains` -> business domain dropdown is empty
+- Missing `businessMenus` -> "more apps" drawer is empty
+- Missing `onLogout` -> logout entry is missing
+- Using `SidebarDomain.name` -> should be `domainName`
+- Adding padding/margin/background to AdminLayoutTemplate content (contentStyle) -> DOUBLE SPACING. Business templates have built-in padding and background.
+
 
 ## Full Documentation
 

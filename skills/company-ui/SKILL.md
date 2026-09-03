@@ -108,7 +108,7 @@ import { SmartListTemplate } from '@donglegeyu/company-ui';
 
 | 优先级 | 组件层 | 示例 | 何时使用 |
 |---|---|---|---|
-| 1（最高） | 业务模板 | `SmartListTemplate` / `FormPageTemplate` / `DetailPageTemplate` / `StatisticsListPage` | 标准列表页 / 表单页 / 详情页 / 统计页 |
+| 1（最高） | 业务模板 | `AdminLayoutTemplate` / `SmartListTemplate` / `FormPageTemplate` / `DetailPageTemplate` / `StatisticsListPage` | 后台骨架 / 标准列表页 / 表单页 / 详情页 / 统计页 |
 | 2 | 共享组件 | `ActionCell` / `BaseInfoForm` / `PageTitle` / `SectionTitle` | 业务模板不覆盖的局部场景 |
 | 3（最低） | 基础组件 | `CompanyTable` / `CompanyForm` / `CompanyButton` | 基础组件无法满足时的手动拼装 |
 
@@ -278,10 +278,11 @@ root.render(
 | 图标探索器 | `IconExplorer` | 图标搜索 |
 | IconPark Hook | `useIconPark` | IconPark 图标 Hook |
 
-### 业务模板组件（9 个）
+### 业务模板组件（10 个）
 
 | 组件 | 导出名 | 用途 |
 |---|---|---|
+| 布局模板 | `AdminLayoutTemplate` | ⭐ 后台骨架一步到位（侧边栏+页签+内容区，页签/高亮/间距全托管） |
 | 智能列表模板 | `SmartListTemplate` | 筛选+表格+分页+列设置+视图切换 |
 | 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格 |
 | 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏 |
@@ -433,90 +434,109 @@ interface StatisticsColumn {
 }
 ```
 
-### 页面骨架组装规则（后台管理系统标准结构）
+### 页面骨架规则（后台管理系统标准结构）
 
-AI 生成完整后台页面时，**必须使用标准骨架**：`CompanySidebar`（左侧导航）+ `CompanyMultiTabs`（顶部页签栏）+ 内容区。不允许只生成内容区而遗漏骨架。
+AI 生成完整后台页面时，**必须使用 `AdminLayoutTemplate`**——它把「左侧导航 CompanySidebar + 顶部页签 CompanyMultiTabs + 内容区」整条骨架固化成一个组件：页签状态、菜单高亮联动、间距契约全部由组件内部托管。**禁止手动拼装 CompanySidebar + CompanyMultiTabs**（仅当需要完全自定义布局时才作为高级用法）。不允许只生成内容区而遗漏骨架。
+
+#### 骨架布局契约（间距已固化在组件内部，无需关心）
+
+```text
+┌──────────────┬────────────────────────────────────────┐
+│              │ CompanyMultiTabs（高 40px，组件内部自管） │
+│  Company     ├────────────────────────────────────────┤
+│  Sidebar     │ 内容区（组件内部：零间距滚动容器）        │
+│ （AdminLayout│  flex:1; overflow:auto; min-width:0     │
+│  Template    │ ┌────────────────────────────────────┐ │
+│  内部自管）   │ │ 业务模板（自带全部内间距）             │ │
+│              │ │  · padding: 0 12px（左右）           │ │
+│  域切换       │ │  · 48px 页头（标题+计数+视图切换）     │ │
+│  一级菜单     │ │  · background: --color-bg-layout    │ │
+│  二级菜单     │ │  · 筛选区/表格/分页间距内部处理         │ │
+│  收藏夹       │ └────────────────────────────────────┘ │
+│  用户信息     │                                        │
+└──────────────┴────────────────────────────────────────┘
+```
+
+**间距契约一句话**：骨架层零间距、模板层全托管——这两层都在 `AdminLayoutTemplate` 内部实现，业务代码不需要也不应该写任何 wrapper 样式。
+
+#### 最小骨架示例（pages 配置式，点菜单自动开页签）
 
 ```tsx
-import { useState } from 'react';
-import { CompanySidebar, CompanyMultiTabs, SmartListTemplate } from '@donglegeyu/company-ui';
-import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, MultiTabItem } from '@donglegeyu/company-ui';
+import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage } from '@donglegeyu/company-ui';
+import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, FieldDefinition } from '@donglegeyu/company-ui';
+
+const domains: SidebarDomain[] = [{ id: 1, domainName: '华东大区' }];
+const userInfo: SidebarUserInfo = { id: 1, username: 'admin', nickname: '系统管理员' };
+const businessMenus: SidebarMenuItem[] = [
+  { key: 'user', label: '用户管理', icon: 'user', children: [
+    { key: 'user-list', label: '用户列表', path: '/user/list' },
+  ] },
+];
+const fields: FieldDefinition[] = [
+  { key: 'username', label: '用户名', type: 'input' },
+  { key: 'action', label: '操作', type: 'item', width: 180 },
+];
 
 export function AdminPage() {
-  const [activeTabKey, setActiveTabKey] = useState('user-list');
-
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      {/* 左侧导航 */}
-      <CompanySidebar
-        domains={domains}
-        currentDomainId={currentDomainId}
-        onDomainChange={handleDomainChange}
-        userInfo={userInfo}
-        firstMenus={firstMenus}
-        systemBottomMenus={systemMenus}
-        businessMenus={businessMenus}
-        secondMenus={secondMenus}
-        customNavMenus={customNavMenus}
-        onCustomNavUpdate={handleCustomNavUpdate}
-        favorites={favorites}
-        onAddFavorite={handleAddFavorite}
-        onRemoveFavorite={handleRemoveFavorite}
-        onFavoritesReorder={handleFavoritesReorder}
-        activeFirstMenu={activeFirstMenu}
-        activeKey={activeMenuKey}
-        onFirstMenuSelect={handleFirstMenuSelect}
-        onMenuClick={handleMenuClick}
-        expandedKeys={expandedKeys}
-        onExpandedKeysChange={setExpandedKeys}
-        secondSidebarFixed={secondFixed}
-        onSecondSidebarFixedChange={setSecondFixed}
-      />
-
-      {/* 右侧内容区 */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* 顶部多页签栏 */}
-        <CompanyMultiTabs
-          tabs={tabs}
-          activeKey={activeTabKey}
-          onChange={(key) => setActiveTabKey(key)}
-          onClose={handleTabClose}
-        />
-
-        {/* 内容区：按页面类型选择业务模板 */}
-        <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
-          <SmartListTemplate fields={fields} fetchData={fetchData} />
-        </div>
-      </div>
-    </div>
+    <AdminLayoutTemplate
+      style={{ height: '100vh' }}
+      logo="/logo-dl.svg"
+      brandName="物资管理系统"
+      domains={domains}
+      businessMenus={businessMenus}
+      userInfo={userInfo}
+      onLogout={() => CompanyMessage.info('退出登录')}
+      onDomainChange={(d) => console.log('switch domain', d.domainName)}
+      pages={[
+        { key: 'user-list', label: '用户列表', path: '/user/list',
+          component: <SmartListTemplate title="用户列表" fields={fields} dataSource={[]} /> },
+      ]}
+    />
   );
 }
 ```
 
-#### 内容区页面类型选择
+这就是全部——没有手动页签状态、没有菜单高亮联动、没有内容区 wrapper（零间距容器在组件内部）。
 
-| 页面类型 | 使用组件 | 典型场景 |
+#### AdminLayoutTemplate 核心 Props（约 7 个必传）
+
+| Prop | 类型 | 说明 |
 |---|---|---|
-| 列表页 | `SmartListTemplate` | 用户管理 / 订单列表 / 数据查询 |
-| 统计列表页 | `StatisticsListPage` | 仪表盘 / 运营数据 / 报表 |
-| 表单页 | `FormPageTemplate` | 新建 / 编辑 / 配置 |
-| 详情页 | `DetailPageTemplate` | 用户详情 / 订单详情 |
+| `logo` | `string` | ⚠️ **必传**！顶部 Logo 路径，如 `"/logo-dl.svg"`（缺了左上角空白） |
+| `brandName` | `string` | ⚠️ **必传**！品牌名称，如 `"物资管理系统"` |
+| `domains` | `SidebarDomain[]` | 业务域下拉数据（缺了下拉空白） |
+| `businessMenus` | `SidebarMenuItem[]` | 业务菜单全集（驱动"更多应用"抽屉 + 二级菜单） |
+| `userInfo` | `SidebarUserInfo` | 左下角用户信息卡 |
+| `onLogout` | `() => void` | ⚠️ **必传**！退出登录回调 |
+| `pages` | `AdminLayoutPageItem[]` | 页面配置：`{ key, label, path?, component }`，点菜单自动开页签并渲染对应 component |
+| `onDomainChange` | `(domain: SidebarDomain) => void` | 建议传！切换业务域回调（业务侧在此重新拉取菜单） |
 
-#### 关键 Props 速查
+**高级 Props 全部可选**（`tabs` / `activeTabKey` / `defaultActiveKey` / `defaultFavorites` / `customNavMenus` / `homeTab` / `homeContent` / `tabExtra` 等）：页签状态默认组件内部自管——点菜单自动开页签/激活、关页签自动切相邻页签。仅当需要与路由同步时才传受控 props。
+
+**内容模式二选一**：
+1. `pages` 配置式（推荐）：key 与菜单联动，点菜单自动渲染对应 component
+2. `children` 兜底：直接放业务模板（`pages` 无匹配页签时渲染）
+
+#### 数据契约（AdminLayoutTemplate props 用）
 
 ```ts
-// CompanySidebar 必填 Props
-interface SidebarDomain { id: number | string; name: string; }
-interface SidebarMenuItem { key: string; label: string; icon?: React.ReactNode; children?: SidebarMenuItem[]; }
-interface SidebarUserInfo { name: string; avatar?: string; }
-
-// CompanyMultiTabs 必填 Props
-interface MultiTabItem { key: string; label: React.ReactNode; path?: string; closable?: boolean; }
+// ⚠️ 字段名必须和这里一致，否则渲染空白
+interface SidebarDomain { id: number | string; domainName: string; }  // ⚠️ 是 domainName，不是 name！
+interface SidebarMenuItem { key: string; label: string; path?: string; icon?: string; iconNode?: React.ReactNode; children?: SidebarMenuItem[]; }
+interface SidebarUserInfo { id?: number | string; username?: string; nickname?: string; realName?: string; avatar?: string; }
+interface SidebarFavoriteItem { menuKey: string; menuLabel: string; menuPath?: string; sort?: number; }
+interface MultiTabItem { key: string; label: React.ReactNode; path?: string; closable?: boolean; disabled?: boolean; }
+interface AdminLayoutPageItem { key: string; label: string; path?: string; component?: React.ReactNode; closable?: boolean; }
 ```
+
+#### 手动拼装（仅高级用法）
+
+`CompanySidebar` + `CompanyMultiTabs` 仍独立导出，但**仅当 AdminLayoutTemplate 无法满足**（如完全自定义布局、页签与复杂路由系统深度耦合）时才手动拼装。手动拼装需要正确处理 CompanySidebar 的 24 个 props、页签增删联动和零间距内容区 wrapper——详见组件文档。**普通后台页面一律用 AdminLayoutTemplate。**
 
 ---
 
-## 六、高频反模式（AI 最容易犯的 12 个错）
+## 六、高频反模式（AI 最容易犯的 13 个错）
 
 | # | 反模式 | 正确做法 |
 |---|---|---|
@@ -532,6 +552,7 @@ interface MultiTabItem { key: string; label: React.ReactNode; path?: string; clo
 | 10 | 忘记 `ThemeProvider` 包裹 | 入口必须 `<ThemeProvider><App /></ThemeProvider>` |
 | 11 | 凭记忆写 props 名称 | 涉及业务模板组件（`SmartListTemplate`/`CompanySidebar`/`StatisticsListPage` 等）时，**先查阅组件库类型定义**（`@donglegeyu/company-ui/dist/index.d.ts`）确认 props 名称，避免因版本差异导致 prop 拼写错误（如 `SidebarDomain` 实际字段是 `domainName` 而非 `name`） |
 | 12 | 手动拼装 Filter + Table + Pagination | **禁止手动拼装列表页**！用 `SmartListTemplate` 一行搞定。也别用 `<CompanyInput placeholder="用户名：">` 当筛选项——placeholder 不是 label，用 `FieldDefinition.label` |
+| 13 | 内容区外层加 `padding` / `margin` / `background` 导致间距叠加 | **业务模板自带内边距和背景**（`SmartListTemplate` 有 `padding: 0 12px` + `--color-bg-layout` 背景）。用 `AdminLayoutTemplate` 时零间距容器在组件内部、`contentStyle` 禁止加 padding/margin/background；手动拼装时内容区容器只写 `flex: 1; overflow: auto; min-width: 0` |
 
 ---
 
@@ -566,12 +587,13 @@ import {
 
 // 业务模板
 import {
+  AdminLayoutTemplate,   // ⭐ 后台骨架（优先用，禁止手动拼 Sidebar + MultiTabs）
   SmartListTemplate,
   StatisticsListPage,
   FormPageTemplate,
   DetailPageTemplate,
-  CompanySidebar,
-  CompanyMultiTabs,
+  CompanySidebar,        // 高级用法：手动拼装骨架时才用
+  CompanyMultiTabs,      // 高级用法：手动拼装骨架时才用
   FilterForm,
   ColumnSettingsPanel,
 } from '@donglegeyu/company-ui';
