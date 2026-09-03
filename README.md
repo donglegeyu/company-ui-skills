@@ -29,27 +29,27 @@ This Skill ensures AI coding agents (Trae, Cursor, Claude Code, Copilot, etc.) c
 Paste this prompt into your AI agent (Trae, Cursor, Claude Code, Copilot, etc.):
 
 ```markdown
-本组件库是 @donglegeyu/company-ui，基于 Ant Design 6 深度定制，品牌主色 #F95914。
+本组件库是 @donglegeyu/company-ui（需 >= 1.2.36），基于 Ant Design 6 深度定制，品牌主色 #F95914。
 
 如果你可以安装 skills，请运行：
 npx skills add donglegeyu/company-ui-skills
 
-在编写任何代码之前，请先阅读以下在线文档：
-- `https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt`
-- `https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/design.md`
-- `https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms-full.txt`
+在编写任何代码之前，请先阅读：
+- `https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms.txt`（规则与数据契约，必读）
+- `https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/design.md`（设计语言，按需）
+- `https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/llms-full.txt`（全部组件文档，用到哪个组件查哪个章节，不必通读）
 
 关键规则：
-1) 始终使用 CompanyXxx 组件（如 CompanyButton，而非 Button），从 @donglegeyu/company-ui 导入
+1) 始终使用 CompanyXxx 组件（如 CompanyButton，而非 Button），从 @donglegeyu/company-ui 导入。白名单例外（无 Company 封装，直接用 antd）：Space / Tag / Form / Row / Col / Popover / Menu / App / theme / ConfigProvider
 2) 禁止硬编码颜色 — 使用 theme.useToken()
 3) 禁止使用 !important
 4) 禁止使用 any 类型
-5) 禁止默认导出
-6) 业务模板组件优先于基础组件（列表页用 SmartListTemplate，不用 CompanyTable 手动拼）
-7) 后台页面骨架必须用 AdminLayoutTemplate 一个组件（传 logo、brandName、domains、businessMenus、userInfo、onLogout、pages 约 7 个核心 props），禁止手动拼装 CompanySidebar + CompanyMultiTabs
-8) SidebarDomain 字段是 domainName（不是 name），先查 index.d.ts 确认 props 名称
-9) AdminLayoutTemplate 内容区零间距已固化在组件内部 — contentStyle 禁止加 padding/margin/background（业务模板自带全部内间距）
-10) CompanyLayout 的 Content 本身零间距——占位样式在内部 div 上，AI 照抄也对
+5) 禁止默认导出 — 用 export function / export const
+6) 业务模板优先于基础组件：后台骨架用 AdminLayoutTemplate，列表页用 SmartListTemplate（不用 CompanyTable 手动拼），表单页用 FormPageTemplate，详情页用 DetailPageTemplate
+7) 后台骨架必须用 AdminLayoutTemplate 一个组件（logo、brandName、domains、businessMenus、userInfo、onLogout、pages 约 7 个核心 props），禁止手动拼装 CompanySidebar + CompanyMultiTabs
+8) 高频数据契约：分页接口 PageResponse 字段是 list（不是 records）；SidebarDomain 字段是 domainName（不是 name）；入口用 ThemeProvider 包裹
+9) 不确定组件 props 时，先查 @donglegeyu/company-ui 的 dist/index.d.ts，不要凭记忆写
+10) AdminLayoutTemplate 内容区零间距已固化在组件内部 — contentStyle 禁止加 padding/margin/background（业务模板自带全部内间距）
 ```
 
 ## Documentation

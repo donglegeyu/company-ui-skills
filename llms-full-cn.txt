@@ -10,8 +10,8 @@
 > 3. NEVER use !important in styles.
 > 4. NEVER use any type. Define explicit TypeScript interfaces.
 > 5. NEVER use default exports. Always use named exports (export function / export const).
-> 6. ALWAYS prioritize business template components over basic components. For list pages use SmartListTemplate, not manual CompanyTable + CompanyPagination assembly.
-> 5. Import from @donglegeyu/company-ui, not from antd directly.
+> 6. ALWAYS prioritize business template components over basic components. For the admin skeleton use AdminLayoutTemplate (do NOT manually assemble CompanySidebar + CompanyMultiTabs). For list pages use SmartListTemplate, not manual CompanyTable + CompanyPagination assembly.
+> 7. Import from @donglegeyu/company-ui, not from antd directly.
 
 
 

@@ -5,7 +5,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 # Company UI for Agents
 
-> **版本基准**：`@donglegeyu/company-ui@1.2.34`，基于 Ant Design 6.x，品牌主色 `#F95914`。
+> **版本基准**：`@donglegeyu/company-ui@1.2.36`（AdminLayoutTemplate 自 1.2.36 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
 
@@ -652,4 +652,4 @@ import { Space, Tag, Form, Row, Col, theme } from 'antd';
 | `smart-list-template-builder` | 智能列表页还原 | 1:1 还原标准列表页 |
 | `dumi-theme-customizer` | Dumi 主题定制 | 修改文档站点样式 |
 
-本 Skill 是其他三个 Skill 的规则基础——`pc-prototype-builder` 和 `smart-list-template-builder` 的代码生成规则均源自本 Skill 的五条红线和组件清单。
+本 Skill 是其他三个 Skill 的规则基础——`pc-prototype-builder` 和 `smart-list-template-builder` 的代码生成规则均源自本 Skill 的六条红线和组件清单。
