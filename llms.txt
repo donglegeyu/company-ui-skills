@@ -33,6 +33,7 @@ export function App() {
 4. NEVER use any type. Define explicit TypeScript interfaces.
 5. NEVER use default exports. Always use named exports (export function / export const).
 6. ALWAYS prioritize business template components over basic components. For the admin skeleton (sidebar + tabs + content), use AdminLayoutTemplate. For a list page, use SmartListTemplate — do NOT manually assemble CompanyTable + CompanyPagination + CompanyForm. For form pages, use FormPageTemplate. For detail pages, use DetailPageTemplate.
+7. The left navigation MUST match the official AdminLayoutTemplate demo: pass `firstMenus` (home + favorites), `systemBottomMenus` (system settings), `homeTab` + `homeContent` as a pair, and give EVERY first-level `businessMenus` item a valid `icon` (see the icon name list in the AdminLayoutTemplate section). Never invent icon names.
 
 ### Allowed antd native components (no Company wrapper exists):
 
@@ -246,7 +247,7 @@ and the spacing contract are all managed internally.
 
 | Prop | Type | Required | Notes |
 |---|---|---|---|
-| logo | string | YES | Logo image path, e.g. "/logo-dl.svg" |
+| logo | string | NO (built-in default) | Logo image path. Since `@donglegeyu/company-ui@1.2.39` a default logo ships INSIDE the package (data URI, zero network) — omit `logo` entirely and the built-in brand logo renders. Pass the project's own logo path to override; pass `logo=""` to force the brandName first-letter fallback. NEVER copy "/logo-dl.svg" from the docs demos — that asset lives on the docs site only and 404s in real projects. |
 | brandName | string | YES | Brand name, e.g. "物资管理系统" |
 | domains | SidebarDomain[] | YES | Business domain dropdown data |
 | businessMenus | SidebarMenuItem[] | YES | Full business menu tree (drives "more apps" drawer + second-level menu) |
@@ -259,7 +260,26 @@ Advanced props (tabs / activeTabKey / defaultActiveKey / favorites / customNavMe
 the component manages tab state internally: clicking a menu opens/activates a tab automatically,
 closing a tab switches to the neighbor. Pass controlled props only when you need routing sync.
 
+### Nav-Structure Props (optional — defaults already match the official demo)
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| firstMenus | SidebarMenuItem[] | Home + Favorites | leftmost icon rail (first-level quick menus) |
+| systemBottomMenus | SidebarMenuItem[] | System Settings | icons pinned to the bottom of the icon rail |
+| visibleMenuCount | number | 6 | max visible first-level business menus; extras collapse into the "more apps" drawer |
+| customNavMenus | SidebarMenuItem[] | businessMenus.slice(0, visibleMenuCount) | controlled quick-nav; pass only to persist user edits |
+| homeTab / homeContent | MultiTabHomeConfig / ReactNode | - | home tab config + its content (recommended: pass both together) |
+
+If the generated navigation differs from the official demo, check these props FIRST —
+e.g. more than 6 business menus collapses extras into the "more apps" drawer by default,
+and omitting homeTab/homeContent leaves the "Home" icon without a landing tab.
+
 ### Minimal Admin Skeleton Example
+
+**GOAL: the left navigation MUST look exactly like the official AdminLayoutTemplate demo.**
+Copy this navigation scaffold verbatim and only rename key/label/path/children. The icon rail
+(Home / Favorites / business icons / bottom System Settings) is decided by `firstMenus` +
+`systemBottomMenus` + `businessMenus[].icon` together — miss any one and the nav differs from the demo.
 
 ```tsx
 import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage } from '@donglegeyu/company-ui';
@@ -267,9 +287,28 @@ import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, FieldDefinition }
 
 const domains: SidebarDomain[] = [{ id: 1, domainName: '华东大区' }];
 const userInfo: SidebarUserInfo = { id: 1, username: 'admin', nickname: '系统管理员' };
+
+// demo-parity icon rail (pass explicitly — do not rely on defaults)
+const firstMenus: SidebarMenuItem[] = [
+  { key: 'home', label: '首页', icon: 'home' },
+  { key: 'favorites', label: '收藏', icon: 'favorites' },
+];
+// demo-parity bottom fixed menu
+const systemBottomMenus: SidebarMenuItem[] = [
+  { key: 'system-settings', label: '系统设置', icon: 'setting' },
+];
+
+// ⚠️ EVERY first-level menu MUST have icon (SvgIcon built-in name, see list below),
+// otherwise the rail renders without icons and differs from the demo
 const businessMenus: SidebarMenuItem[] = [
-  { key: 'user', label: '用户管理', icon: 'user', children: [
+  { key: 'user', label: '用户管理', icon: 'people-top-card', children: [
     { key: 'user-list', label: '用户列表', path: '/user/list' },
+  ] },
+  { key: 'role', label: '角色权限', icon: 'config', children: [
+    { key: 'role-list', label: '角色列表', path: '/role/list' },
+  ] },
+  { key: 'dept', label: '部门管理', icon: 'category-management', children: [
+    { key: 'dept-list', label: '部门列表', path: '/dept/list' },
   ] },
 ];
 const fields: FieldDefinition[] = [
@@ -281,13 +320,17 @@ export function AdminPage() {
   return (
     <AdminLayoutTemplate
       style={{ height: '100vh' }}
-      logo="/logo-dl.svg"
+      // logo 可省略：@1.2.39+ 内置默认 Logo（随包 data URI）；传项目自己的路径覆盖；传 "" 回退品牌名首字母
       brandName="物资管理系统"
       domains={domains}
+      firstMenus={firstMenus}
+      systemBottomMenus={systemBottomMenus}
       businessMenus={businessMenus}
       userInfo={userInfo}
       onLogout={() => CompanyMessage.info('退出登录')}
       onDomainChange={(d) => console.log('switch domain', d.domainName)}
+      homeTab={{ key: 'home', label: '首页' }}
+      homeContent={<div style={{ padding: 24, fontSize: 14 }}>首页</div>}
       pages={[
         { key: 'user-list', label: '用户列表', path: '/user/list',
           component: <SmartListTemplate title="用户列表" fields={fields} dataSource={[]} /> },
@@ -296,6 +339,29 @@ export function AdminPage() {
   );
 }
 ```
+
+Demo-parity nav checklist (self-check after generating):
+1. Icon rail top-to-bottom: logo/brand → domain → Home(home) → Favorites(favorites) → business icons
+   (max `visibleMenuCount=6` visible, extras in the "more apps" drawer) → System Settings(setting) → user card
+2. Every first-level `businessMenus` item has `icon`, and the name is in the list below
+3. `homeTab` + `homeContent` passed as a pair (clicking Home opens a landing tab)
+4. NEVER invent icon names — a made-up name renders as blank (fallback needs the full sprite loaded)
+
+Valid icon names — the SvgIcon built-in (curated) dictionary, 61 icons total (verified against the
+icon-library module at /icon-library; names are EXACT, never invent your own — an unknown name
+falls back to the full sprite and renders BLANK unless the sprite is loaded):
+
+Nav & system (13): `home` `setting` `logout` `favorites` `star` `star-fill` `pin` `pushpin` `bookmark` `tag` `config` `tool` `radar`
+Business (18): `people-top-card` `doc-search` `order` `shopping-cart-del` `buy` `commodity` `file-cabinet` `message-security` `comments` `table` `box` `database-config` `wallet` `scan-setting` `category-management` `user-positioning` `all-application` `folder-open`
+Actions (17): `search` `edit` `writing-fluently` `more-one` `more` `more-three` `check-one` `close` `add-one` `minus-one` `delete-two` `save` `preview-open` `preview-close-one` `copy` `zoom-in` `zoom-out`
+Layout (8): `drag` `density` `more-app` `hamburger-button` `waterfalls-h` `list` `pic` `equalizer`
+Arrows (5): `down` `up` `left` `right` `refresh`
+
+For first-level businessMenus icons prefer: `people-top-card` (user mgmt) / `config` (role/perm) /
+`category-management` (dept/taxonomy) / `box` / `order` / `buy` / `commodity` / `file-cabinet` /
+`table` / `doc-search` / `database-config` / `wallet` / `comments` / `folder-open` / `radar` / `tool`.
+The full 2658-icon IconPark library is only available via `href` + loaded sprite — do NOT use
+those names as `icon` in menus.
 
 That is ALL. No manual tab state, no menu highlight sync, no content wrapper —
 the zero-spacing content wrapper is built into the component.

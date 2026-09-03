@@ -29,7 +29,7 @@ This Skill ensures AI coding agents (Trae, Cursor, Claude Code, Copilot, etc.) c
 Paste this prompt into your AI agent (Trae, Cursor, Claude Code, Copilot, etc.):
 
 ```markdown
-本组件库是 @donglegeyu/company-ui（需 >= 1.2.36），基于 Ant Design 6 深度定制，品牌主色 #F95914。
+本组件库是 @donglegeyu/company-ui（需 >= 1.2.36；内置默认 Logo 自 1.2.39），基于 Ant Design 6 深度定制，品牌主色 #F95914。
 
 如果你可以安装 skills，请运行：
 npx skills add donglegeyu/company-ui-skills
@@ -48,8 +48,10 @@ npx skills add donglegeyu/company-ui-skills
 6) 业务模板优先于基础组件：后台骨架用 AdminLayoutTemplate，列表页用 SmartListTemplate（不用 CompanyTable 手动拼），表单页用 FormPageTemplate，详情页用 DetailPageTemplate
 7) 后台骨架必须用 AdminLayoutTemplate 一个组件（logo、brandName、domains、businessMenus、userInfo、onLogout、pages 约 7 个核心 props），禁止手动拼装 CompanySidebar + CompanyMultiTabs
 8) 高频数据契约：分页接口 PageResponse 字段是 list（不是 records）；SidebarDomain 字段是 domainName（不是 name）；入口用 ThemeProvider 包裹
-9) 不确定组件 props 时，先查 @donglegeyu/company-ui 的 dist/index.d.ts，不要凭记忆写
+9) 不确定组件 props 时，先查已安装包的类型定义（node_modules/@donglegeyu/company-ui/dist/es/index.d.ts），不要凭记忆写；未安装或无法读文件时，查 llms-full.txt 中该组件的章节
 10) AdminLayoutTemplate 内容区零间距已固化在组件内部 — contentStyle 禁止加 padding/margin/background（业务模板自带全部内间距）
+11) AdminLayoutTemplate 左侧导航必须与官方布局模板 demo 一致：显式传 firstMenus（首页+收藏）、systemBottomMenus（系统设置）、homeTab/homeContent（成对），且每个一级 businessMenus 项必须带合法 icon（SvgIcon 精选图标名，禁止编造，否则渲染空白）。业务菜单超过 6 个时多出的自动进「更多应用」抽屉（visibleMenuCount 默认 6）。照抄 llms.txt / SKILL.md 中的 demo 同款导航脚手架，只改 key/label/path
+12) logo 可省略：@1.2.39+ 内置默认 Logo（随包 data URI，零网络）。传项目路径覆盖；传 "" 回退 brandName 首字母。禁止照抄文档 demo 的 /logo-dl.svg（文档站专属资产，真实项目 404）
 ```
 
 ## Documentation
