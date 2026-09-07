@@ -107,7 +107,7 @@ import { CompanyTable, CompanyPagination, CompanyButton } from '@donglegeyu/comp
 
 // ✅ 正确：用业务模板组件一步到位
 import { SmartListTemplate } from '@donglegeyu/company-ui';
-<SmartListTemplate fields={fields} fetchData={fetchData} />
+<SmartListTemplate title="用户列表" fields={fields} dataSource={dataSource} />
 ```
 
 | 优先级   | 组件层  | 示例                                                                                                             | 何时使用                           |
@@ -391,10 +391,12 @@ designRules.shadows.small       // '0 2px 8px rgba(0,0,0,0.08)'
 interface PageResponse<T> {
   list: T[];       // 注意：是 list，不是 records 或 dataList
   total: number;
-  pageNum: number;
+  pageNum: number;  // 注意：是 pageNum，不是 current！
   pageSize: number;
 }
 ```
+
+⚠️ **双命名陷阱**：antd 的 `pagination` prop 用 `current`（`pagination={{ current: 1 }}` 是对的），但**数据契约 `PageResponse` 用 `pageNum`**——接口返回值/mock 数据里写 `current` 会导致分页失效。两套命名并存，别混。
 
 ### FieldDefinition（SmartListTemplate 字段定义）
 
@@ -409,13 +411,28 @@ interface FieldDefinition {
   fixed?: 'left' | 'right';
   ellipsis?: boolean;
   hideInFilter?: boolean;
-  sortable?: boolean;
+  sortable?: boolean;  // 可选开启（默认 false）——列头排序；业务默认不带，页面确有需要才加
 }
 ```
 
 - `type: 'item'` → 不出现在筛选区，仅作表格列（通常用于操作列，key 必须是 `'action'`）
 
 - `hideInFilter: true` → 字段仍作表格列，但不进筛选区
+
+### 插槽纪律（titleExtra / toolbarActions 等）
+
+业务模板的扩展插槽是**固定的几个**。自定义内容只能放进这些插槽——禁止在模板外再包一层 UI，也**禁止自创用户没要的内容**：
+
+| 插槽 | 语义 | 允许的内容 |
+|---|---|---|
+| `titleExtra` | 标题的延伸/补充（状态标签、计数） | antd `Tag` / `Space` 包 Tag——**仅当用户需求明确提到计数/状态时才传** |
+| `titleRightActions` / `titleActions` | 标题栏右侧独立操作区 | CompanyButton 按钮组 |
+| `toolbarActions` / `toolbarRightActions` | 工具栏左侧/右侧操作 | CompanyButton 按钮组 |
+
+三条规则：
+1. **禁止自创内容**：像「共 X 条 / 启用 X / 禁用 X」这类统计标签是**自定义 titleExtra，非模板内置**——用户需求里没提计数就完全不传 titleExtra（默认：不传）
+2. 工具栏/操作区按钮一律 `CompanyButton` + **文字标签**（「新增」「导出」），与官方 demo 一致；**禁止**图标按钮、禁止在按钮组外加 Divider/自定义间距
+3. 行内操作用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }`）配 `bodyCell` 渲染——禁止每行手拼 `<Space>` + CompanyButton。**删除按钮标准：`confirm: true, confirmTitle` 二次确认，不用 `danger`**（全库统一）
 
 ### ColumnField（列设置）
 
@@ -445,15 +462,15 @@ interface FormField {
 ### DetailFieldItem / DetailTagItem / DetailTabItem（DetailPageTemplate）
 
 ```ts
-interface DetailFieldItem { label: string; value: string; }
-interface DetailTagItem { text: string; variant: 'success' | 'warning' | 'error' | 'volcano'; }
-interface DetailTabItem { key: string; label: string; children: React.ReactNode; }
+interface DetailFieldItem { label: string; value: React.ReactNode; }
+interface DetailTagItem { text: React.ReactNode; variant?: 'default' | 'volcano' | 'success' | 'warning'; }
+interface DetailTabItem { key: string; label: React.ReactNode; children: React.ReactNode; disabled?: boolean; }
 ```
 
 ### StatisticCardConfig / StatisticsFilterField / StatisticsColumn（StatisticsListPage）
 
 ```ts
-interface StatisticCardConfig { key: string; title: string; value: string | number; }
+interface StatisticCardConfig { key: string; title: string; value: React.ReactNode; }
 interface StatisticsFilterField {
   key: string;
   label: string;
@@ -461,12 +478,191 @@ interface StatisticsFilterField {
   placeholder?: string;
   options?: { label: string; value: string | number }[];
 }
-interface StatisticsColumn {
+interface StatisticsColumn<T = Record<string, unknown>> {
   key: string;
-  label: string;
+  label: string;        // 列标题字段是 label，不是 antd 的 title！
   visible?: boolean;
   width?: number;
-  render?: (record: Record<string, unknown>) => React.ReactNode;
+  fixed?: 'left' | 'right';
+  render?: (record: T, index: number) => React.ReactNode;
+}
+```
+
+### FormPageTemplate 速查（表单页：新建/编辑）
+
+模板提供：页标题 + 返回箭头 + 卡片包裹内容区 + **固定底部操作栏（提交/取消）**。表单体是配置驱动：`SectionTitle` + `BaseInfoForm` + `FormField[]`。**禁止**手拼 CompanyForm 行和底部按钮栏——模板已内置。
+
+| Props | 类型 | 说明 |
+|---|---|---|
+| title | string | **必传**，页面标题 |
+| showBack / onBack | boolean / () => void | 标题旁返回箭头 |
+| onSubmit / onCancel | () => void | 绑定到底部固定操作栏 |
+| submitText / cancelText | string | 默认「提交 / 取消」 |
+| submitLoading | boolean | 提交按钮 loading |
+| footerPosition | 'fixed' \| 'static' | 默认 fixed |
+| showFooter / footer | boolean / ReactNode | footer 传入则完全替换默认操作栏 |
+| topContent | ReactNode | 内容区顶部插槽（Steps、提示条） |
+| contentWrapped | boolean | 默认 true（CompanyCard 包裹）；自定义内容设 false |
+
+最小示例：
+
+```tsx
+import { useState } from 'react';
+import { FormPageTemplate, SectionTitle, BaseInfoForm } from '@donglegeyu/company-ui';
+import type { FormField } from '@donglegeyu/company-ui';
+
+const baseFields: FormField[] = [
+  { name: 'name', label: '商品名称', type: 'input', required: true },
+  { name: 'category', label: '商品分类', type: 'select', options: [
+    { label: '电子产品', value: 'electronics' },
+    { label: '服装', value: 'clothing' },
+  ]},
+];
+
+export function ProductCreatePage() {
+  const [data, setData] = useState<Record<string, string | number | boolean | null | undefined>>({});
+  return (
+    <FormPageTemplate title="新增商品" showBack onSubmit={() => { /* save */ }}>
+      <SectionTitle title="基础信息" />
+      <BaseInfoForm value={data} fields={baseFields} onChange={setData} />
+    </FormPageTemplate>
+  );
+}
+```
+
+分组表单：children 里重复「`<SectionTitle title="组名" />` + `<BaseInfoForm ... />`」组合即可。
+
+### DetailPageTemplate 速查（详情页：查看）
+
+模板提供：标题栏（返回 + 头像 + 主体名称 + 标签 + 操作区）+ 信息栅格 + Tab 面板。
+
+| Props | 类型 | 说明 |
+|---|---|---|
+| title | string | **必传**，页面标题 |
+| showBack / onBack | boolean / () => void | 返回箭头 |
+| avatar / primaryName | ReactNode | 标题旁的主体信息块 |
+| tags | DetailTagItem[] | 主体名旁的状态标签 |
+| infoFields | DetailFieldItem[] | 键值对信息栅格 |
+| infoColumns | number | 栅格列数，如 3 |
+| tabs | DetailTabItem[] | 信息区下方的 Tab 面板 |
+| activeTab / onTabChange | string / (key) => void | 受控 Tab |
+| titleActions | ReactNode | 解耦操作区（编辑 / 删除按钮） |
+
+示例（覆盖全部核心 props：avatar / tags / tabs / titleActions；15 行表格完整视觉版见 llms-full.txt）：
+
+```tsx
+import { Row, Col } from 'antd';
+import { DetailPageTemplate, CompanyTable, CompanyTag, CompanyButton, SectionTitle } from '@donglegeyu/company-ui';
+import type { DetailFieldItem, DetailTagItem, DetailTabItem } from '@donglegeyu/company-ui';
+
+const infoFields: DetailFieldItem[] = [
+  { label: '工单编号', value: 'SC20240615001' },
+  { label: '燃气编码', value: 'GAS-888234' },
+  { label: '客户名称', value: '张三' },
+  { label: '联系电话', value: '138****8888' },
+  { label: '所属公司', value: '城南燃气分公司' },
+  { label: '详细地址', value: '某某小区 12 栋 3 单元 501' },
+];
+const tags: DetailTagItem[] = [
+  { text: '已安检', variant: 'success' },
+  { text: '居民用户', variant: 'default' },
+  { text: '已上传', variant: 'volcano' },
+];
+const tabs: DetailTabItem[] = [
+  {
+    key: 'detail',
+    label: '详情',
+    children: (
+      <div style={{ padding: '0 0 16px' }}>
+        <SectionTitle title="个人信息" />
+        <Row gutter={[24, 16]}>
+          <Col xs={24} sm={12} md={8} lg={6}>出生日期：1985-06-15</Col>
+          <Col xs={24} sm={12} md={8} lg={6}>身份证号：3201**********1234</Col>
+          <Col xs={24} sm={24} md={24} lg={12}>常住地址：江苏省南京市玄武区中山路100号</Col>
+        </Row>
+      </div>
+    ),
+  },
+  {
+    key: 'result',
+    label: '安检结果',
+    children: (
+      <CompanyTable
+        dataSource={[
+          { id: 1, projectName: '燃气表检查', status: '合格' },
+          { id: 2, projectName: '管道密封性', status: '合格' },
+          { id: 3, projectName: '报警器检查', status: '不合格' },
+        ]}
+        columns={[
+          { title: '检查项目', dataIndex: 'projectName' },
+          { title: '状态', dataIndex: 'status', render: (text: string) => <CompanyTag>{text}</CompanyTag> },
+        ]}
+        pagination={false}
+        rowKey="id"
+      />
+    ),
+  },
+];
+
+export function CheckDetailPage() {
+  return (
+    <DetailPageTemplate
+      title="安检详情"
+      showBack
+      avatar="张"
+      primaryName="张三"
+      tags={tags}
+      infoFields={infoFields}
+      infoColumns={3}
+      tabs={tabs}
+      titleActions={<CompanyButton type="primary">编辑</CompanyButton>}
+    />
+  );
+}
+```
+
+### StatisticsListPage 速查（统计列表页：统计卡片 + 表格）
+
+模板提供：统计卡片行 + 顶部搜索 + 高级筛选抽屉 + 表格 + 分页。
+
+| Props | 类型 | 说明 |
+|---|---|---|
+| columns | StatisticsColumn[] | **必传**。列标题字段是 `label`，**antd 的 `title` 不生效** |
+| fetchData | (params) => Promise<PageResponse<T>> | 严格 PageResponse 契约（`list` 不是 `records`） |
+| statisticCards | StatisticCardConfig[] | 统计卡片行，不传则隐藏 |
+| filterFields | StatisticsFilterField[] | 高级筛选抽屉字段 |
+| searchKey | string | 顶部搜索框提交的参数名，默认 'keyword' |
+| actionColumn | { width?, title?, render } | 自动追加固定右侧的操作列 |
+| onRefresh | (filterParams) => void | 传入才显示刷新按钮 |
+| defaultPageSize / rowKey / size / scrollY | — | 表格行为 |
+
+最小示例：
+
+```tsx
+import { StatisticsListPage } from '@donglegeyu/company-ui';
+import type { StatisticsColumn, StatisticCardConfig, PageResponse } from '@donglegeyu/company-ui';
+
+const statisticCards: StatisticCardConfig[] = [
+  { key: 'total', title: '安检总数', value: 1280 },
+  { key: 'passed', title: '已通过', value: 1024 },
+];
+const columns: StatisticsColumn<Record<string, unknown>>[] = [
+  { key: 'deviceName', label: '设备名称' },
+  { key: 'result', label: '安检结果' },
+  { key: 'checkTime', label: '安检时间', width: 180 },
+];
+
+export function CheckResultPage() {
+  return (
+    <StatisticsListPage
+      title="安检结果查询"
+      statisticCards={statisticCards}
+      columns={columns}
+      searchKey="keyword"
+      fetchData={async (): Promise<PageResponse<Record<string, unknown>>> =>
+        ({ list: [], total: 0, pageNum: 1, pageSize: 10 })}
+    />
+  );
 }
 ```
 
@@ -516,7 +712,7 @@ const systemBottomMenus: SidebarMenuItem[] = [
   { key: 'system-settings', label: '系统设置', icon: 'setting' },
 ];
 
-// ⚠️ 每个一级菜单必须带 icon（SvgIcon 精选图标名，见下方清单），否则导航栏没有图标、和 demo 不一致
+// icon 可选：省略时按 label 关键词自动匹配（见下方「自动匹配机制」）；此处显式传是为了和 demo 图标一致
 const businessMenus: SidebarMenuItem[] = [
   { key: 'user', label: '用户管理', icon: 'people-top-card', children: [
     { key: 'user-list', label: '用户列表', path: '/user/list' },
@@ -560,9 +756,11 @@ export function AdminPage() {
 **Demo 同款导航核对清单**（生成后自查）：
 
 1. 一级图标栏从上到下：Logo/品牌 → 业务域 → `首页`(home) → `收藏`(favorites) → 业务菜单图标（最多 `visibleMenuCount=6` 个，多出进「更多应用」抽屉）→ 底部 `系统设置`(setting) → 用户信息卡
-2. 每个一级 `businessMenus` 项都带 `icon`，且图标名在下方清单内
+2. 每个一级 `businessMenus` 项都有图标（显式传 `icon` 或省略后自动匹配均可；显式传时图标名必须在下方清单内）
 3. `homeTab` + `homeContent` 成对传入（点「首页」有落地页签）
 4. 图标名只能用 `SvgIcon` 精选字典里真实存在的名字，**禁止编造**（编造的图标名会渲染为空白）
+
+**自动匹配机制**：菜单不传 `icon` 时，组件按 `label` 关键词自动匹配内置图标（如「用户/会员/客户」→ `people-top-card`、「商品/物料」→ `commodity`、「订单/销售」→ `order`、「库存/仓库」→ `file-cabinet`、「财务/账单」→ `wallet`、「报表/统计」→ `table`），无命中兜底 `folder-open`。传了无效 `icon` 名时开发环境有控制台警告并回退关键词匹配。**因此业务菜单可以完全不写 icon**。
 
 **图标清单**（SvgIcon 精选字典全集 61 个，已对照组件库「图标库」模块 /icon-library 逐字核实；名字必须完全一致，**禁止编造**——未命中精选的名字回退全量 sprite，普通项目未加载 sprite 时渲染空白）：
 
@@ -574,7 +772,7 @@ export function AdminPage() {
 | 布局排版（8） | `drag` `density` `more-app` `hamburger-button` `waterfalls-h` `list` `pic` `equalizer` |
 | 箭头方向（5） | `down` `up` `left` `right` `refresh` |
 
-一级 `businessMenus` 常用映射：用户管理 `people-top-card`、角色/权限 `config`、部门/分类 `category-management`、商品 `commodity`、订单 `order`、采购 `buy`、库存 `file-cabinet`、财务 `wallet`、报表 `doc-search`、系统 `database-config`、消息 `comments`、工具 `tool`。
+一级 `businessMenus` 显式传 `icon` 时的推荐值：用户管理 `people-top-card`、角色/权限 `config`、部门/分类 `category-management`、商品 `commodity`、订单 `order`、采购 `buy`、库存 `file-cabinet`、财务 `wallet`、报表 `doc-search`、系统 `database-config`、消息 `comments`、工具 `tool`。⚠️ 注意：省略 `icon` 时自动匹配的结果可能与上表不同（源码关键词表：角色/权限→`message-security`、报表/统计→`table`、系统/设置→`setting`）——想要上表图标就必须显式传。
 全量 2658 个 IconPark 图标只能通过 `href` + 已加载的 sprite 引用，**不要**把那些名字当菜单 `icon` 用。
 
 这就是全部——没有手动页签状态、没有菜单高亮联动、没有内容区 wrapper（零间距容器在组件内部）。
@@ -616,7 +814,7 @@ export function AdminPage() {
 ```ts
 // ⚠️ 字段名必须和这里一致，否则渲染空白
 interface SidebarDomain { id: number | string; domainName: string; }  // ⚠️ 是 domainName，不是 name！
-interface SidebarMenuItem { key: string; label: string; path?: string; icon?: string; iconNode?: React.ReactNode; children?: SidebarMenuItem[]; }
+interface SidebarMenuItem { key: string; label: string; path?: string; icon?: string; iconNode?: React.ReactNode; /* 优先于 icon，完全遮蔽库图标——仅限内置集没有的图标，禁传 antd 图标 */ children?: SidebarMenuItem[]; }
 interface SidebarUserInfo { id?: number | string; username?: string; nickname?: string; realName?: string; avatar?: string; }
 interface SidebarFavoriteItem { menuKey: string; menuLabel: string; menuPath?: string; sort?: number; }
 interface MultiTabItem { key: string; label: React.ReactNode; path?: string; closable?: boolean; disabled?: boolean; }
@@ -629,7 +827,22 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 
 ***
 
-## 六、高频反模式（AI 最容易犯的 13 个错）
+## 六、高频反模式（AI 最容易犯的 15 个错）
+
+### 组件已自带能力（AI 勿手加）——先看这张表再写任何装饰
+
+核心心智：**文档告诉你「该用什么组件」，这张表告诉你「哪些能力组件已自带、你只需传数据/配置」**。给已自带的能力再手加一层 = 视觉/行为不一致。
+
+| 能力 | 组件已自带 | AI 勿手加 |
+|---|---|---|
+| 导航图标 | `SidebarMenuItem` 不传 `icon` 时**按 label 关键词自动匹配**内置图标（如「用户管理」→ `people-top-card`、「商品」→ `commodity`），兜底 `folder-open` | ❌ 勿传 `iconNode={<SettingOutlined/>}` 等 antd 图标——源码里 `iconNode || <SvgIcon>`，传了会**完全遮蔽**库图标系统，线性/填充风格混用 |
+| 品牌 Logo | `@1.2.39+` 内置默认 Logo（随包 data URI） | ❌ 勿自传 `logo="/logo.svg"`——仅当用户明确要求自定义品牌时才传 |
+| 后台骨架 | `AdminLayoutTemplate` 内置侧边栏+页签+内容区 | ❌ 勿手拼 `CompanySidebar + CompanyMultiTabs`（高级用法除外） |
+| 内容区间距 | 业务模板自带内边距+背景色，`AdminLayoutTemplate` 内部零间距容器 | ❌ 勿在 `contentStyle`/外层容器加 padding/margin/background |
+| 工具栏按钮 | 模板工具栏为**纯文字** `CompanyButton` | ❌ 勿给按钮加 antd icon，与官方 demo 不一致 |
+| 头部统计/装饰 | 头部由业务模板管理 | ❌ 勿自创 `titleExtra` 统计标签（「共 X / 启用 X」）——用户没提计数就不传 |
+
+**写任何装饰/图标/额外 UI 到业务模板前，先自问：这个能力组件是否已自带？若是，只传数据/配置，不手加。**
 
 | #  | 反模式                                               | 正确做法                                                                                                                                                                                                                     |
 | -- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -643,9 +856,11 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 8  | `Space direction="vertical"`                      | `Space orientation="vertical"`（antd 6 废弃 `direction`）                                                                                                                                                                    |
 | 9  | `size="middle"`                                   | `size="medium"`（antd 6 默认值改为 `medium`）                                                                                                                                                                                   |
 | 10 | 忘记 `ThemeProvider` 包裹                             | 入口必须 `<ThemeProvider><App /></ThemeProvider>`                                                                                                                                                                            |
-| 11 | 凭记忆写 props 名称                                     | 涉及业务模板组件（`SmartListTemplate`/`CompanySidebar`/`StatisticsListPage` 等）时，**先查阅组件库类型定义**（`@donglegeyu/company-ui/dist/index.d.ts`）确认 props 名称，避免因版本差异导致 prop 拼写错误（如 `SidebarDomain` 实际字段是 `domainName` 而非 `name`）           |
+| 11 | 凭记忆写 props 名称                                     | 涉及业务模板组件（`SmartListTemplate`/`CompanySidebar`/`StatisticsListPage` 等）时，**先查阅组件库类型定义**（`node_modules/@donglegeyu/company-ui/dist/es/index.d.ts`）确认 props 名称，避免因版本差异导致 prop 拼写错误（如 `SidebarDomain` 实际字段是 `domainName` 而非 `name`）           |
 | 12 | 手动拼装 Filter + Table + Pagination                  | **禁止手动拼装列表页**！用 `SmartListTemplate` 一行搞定。也别用 `<CompanyInput placeholder="用户名：">` 当筛选项——placeholder 不是 label，用 `FieldDefinition.label`                                                                                    |
 | 13 | 内容区外层加 `padding` / `margin` / `background` 导致间距叠加 | **业务模板自带内边距和背景**（`SmartListTemplate` 有 `padding: 0 12px` + `--color-bg-layout` 背景）。用 `AdminLayoutTemplate` 时零间距容器在组件内部、`contentStyle` 禁止加 padding/margin/background；手动拼装时内容区容器只写 `flex: 1; overflow: auto; min-width: 0` |
+| 14 | 自创用户没要的插槽内容（如标题旁统计标签「共 X / 启用 X」）、工具栏用图标按钮 | **插槽纪律**：统计标签是自定义 titleExtra 而非模板内置，用户没提计数就不传；工具栏按钮一律 `CompanyButton` + 文字标签；行内操作用 `ActionCell` 配 `bodyCell`（详见「插槽纪律」一节） |
+| 15 | `iconNode: <SettingOutlined />`（antd 图标进菜单） | `icon: 'setting'` 字符串键（键名查 `/icon-library` 精选集）；业务菜单可不写 icon，**组件按菜单名自动匹配**。iconNode 仅限内置图标集没有的图标，禁止传 `@ant-design/icons` 组件（视觉风格不一致） |
 
 ***
 

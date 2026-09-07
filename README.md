@@ -52,6 +52,7 @@ npx skills add donglegeyu/company-ui-skills
 10) AdminLayoutTemplate 内容区零间距已固化在组件内部 — contentStyle 禁止加 padding/margin/background（业务模板自带全部内间距）
 11) AdminLayoutTemplate 左侧导航必须与官方布局模板 demo 一致：显式传 firstMenus（首页+收藏）、systemBottomMenus（系统设置）、homeTab/homeContent（成对），且每个一级 businessMenus 项必须带合法 icon（SvgIcon 精选图标名，禁止编造，否则渲染空白）。业务菜单超过 6 个时多出的自动进「更多应用」抽屉（visibleMenuCount 默认 6）。照抄 llms.txt / SKILL.md 中的 demo 同款导航脚手架，只改 key/label/path
 12) logo 可省略：@1.2.39+ 内置默认 Logo（随包 data URI，零网络）。传项目路径覆盖；传 "" 回退 brandName 首字母。禁止照抄文档 demo 的 /logo-dl.svg（文档站专属资产，真实项目 404）
+13) 插槽纪律：统计标签（共 X / 启用 X）是自定义 titleExtra 而非模板内置——用户没提计数就不传；工具栏按钮一律 CompanyButton + 文字标签（禁止图标按钮）；行内操作用 ActionCell 配 bodyCell，禁止每行手拼 Space + CompanyButton
 ```
 
 ## Documentation

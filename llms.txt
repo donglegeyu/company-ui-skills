@@ -33,7 +33,7 @@ export function App() {
 4. NEVER use any type. Define explicit TypeScript interfaces.
 5. NEVER use default exports. Always use named exports (export function / export const).
 6. ALWAYS prioritize business template components over basic components. For the admin skeleton (sidebar + tabs + content), use AdminLayoutTemplate. For a list page, use SmartListTemplate — do NOT manually assemble CompanyTable + CompanyPagination + CompanyForm. For form pages, use FormPageTemplate. For detail pages, use DetailPageTemplate.
-7. The left navigation MUST match the official AdminLayoutTemplate demo: pass `firstMenus` (home + favorites), `systemBottomMenus` (system settings), `homeTab` + `homeContent` as a pair, and give EVERY first-level `businessMenus` item a valid `icon` (see the icon name list in the AdminLayoutTemplate section). Never invent icon names.
+7. The left navigation MUST match the official AdminLayoutTemplate demo: pass `firstMenus` (home + favorites), `systemBottomMenus` (system settings), `homeTab` + `homeContent` as a pair, first-level `businessMenus` icons are OPTIONAL — the sidebar AUTO-MATCHES a built-in icon from the label when `icon` is omitted; pass `icon` (a valid name from the AdminLayoutTemplate icon list, never invented) only when you need a specific one.
 
 ### Allowed antd native components (no Company wrapper exists):
 
@@ -48,8 +48,10 @@ export function App() {
 ## SmartListTemplate — Minimal Example
 
 ```tsx
-import { SmartListTemplate } from '@donglegeyu/company-ui';
-import type { FieldDefinition } from '@donglegeyu/company-ui';
+import { useState } from 'react';
+import { Space } from 'antd';
+import { SmartListTemplate, CompanyButton, CompanyMessage, ActionCell } from '@donglegeyu/company-ui';
+import type { FieldDefinition, ColumnField } from '@donglegeyu/company-ui';
 
 const fields: FieldDefinition[] = [
   { key: 'username', label: '用户名', type: 'input' },
@@ -61,16 +63,317 @@ const fields: FieldDefinition[] = [
   { key: 'action', label: '操作', type: 'item', width: 180 },
 ];
 
-// SmartListTemplate handles: filter form + table + pagination + column settings + view switching
+const initialColumns: ColumnField[] = [
+  { key: 'username', label: '用户名', visible: true, width: 140 },
+  { key: 'status', label: '状态', visible: true, width: 100 },
+  { key: 'createTime', label: '创建时间', visible: true, width: 160 },
+  { key: 'action', label: '操作', visible: true, width: 180 },
+];
+
+// NOTE: SmartListTemplate is CONTROLLED — dataSource + pagination props.
+// It does NOT have a fetchData prop (that belongs to StatisticsListPage).
+const dataSource = [
+  { id: 1, username: 'admin', status: 'enabled', createTime: '2024-01-15' },
+  { id: 2, username: 'zhangsan', status: 'enabled', createTime: '2024-01-14' },
+  { id: 3, username: 'lisi', status: 'disabled', createTime: '2024-01-13' },
+];
+
+// SmartListTemplate provides: title + filter form + toolbar (primary buttons + refresh) +
+// table + pagination + column settings + view switching
 export function UserListPage() {
-  return <SmartListTemplate fields={fields} fetchData={fetchUsers} />;
+  const [columnFields, setColumnFields] = useState<ColumnField[]>(initialColumns);
+  return (
+    <SmartListTemplate
+      title="用户列表"
+      fields={fields}
+      dataSource={dataSource}
+      pagination={{ current: 1, pageSize: 10, total: 3 }}
+      columnFields={columnFields}
+      onColumnSettingsChange={setColumnFields}
+      toolbarActions={
+        <Space size={12}>
+          <CompanyButton type="primary" onClick={() => CompanyMessage.info('新增')}>新增</CompanyButton>
+          <CompanyButton onClick={() => CompanyMessage.info('导出')}>导出</CompanyButton>
+        </Space>
+      }
+      onRefresh={(filterParams) => CompanyMessage.success('刷新完成：' + JSON.stringify(filterParams))}
+      bodyCell={(column, record) => {
+        if (column.key === 'action') {
+          return (
+            <ActionCell
+              buttons={[
+                { key: 'edit', label: '编辑', onClick: () => CompanyMessage.info('编辑 ' + record.id) },
+                { key: 'delete', label: '删除', confirm: true, confirmTitle: '确定删除？', onClick: () => CompanyMessage.info('删除 ' + record.id) },
+              ]}
+            />
+          );
+        }
+        return null;
+      }}
+    />
+  );
 }
 ```
 
 ⚠️ **Common AI mistakes to avoid**:
+- DON'T pass `fetchData` to SmartListTemplate — it has NO such prop. It is controlled: `dataSource` + `onPaginationChange` (fetchData belongs to StatisticsListPage).
 - DON'T use `<CompanyInput placeholder="用户名：">` — placeholder is NOT a label. Use FieldDefinition.label or Form.Item label.
 - DON'T build `<CompanyTable columns={...} dataSource={...} />` + `<CompanyPagination />` + filter form manually — use SmartListTemplate.
-- DON'T use `data.records` — PageResponse field is `data.list`.
+- DON'T use `data.records` — PageResponse field is `data.list`, page number is `pageNum` (antd's `pagination` PROP uses `current` — do not mix the two).
+
+### Slot discipline (titleExtra / toolbarActions / actions...)
+
+Templates expose FIXED extension slots. Put custom content ONLY in these slots — never wrap
+extra UI around the template, and never invent slot content the user didn't ask for:
+
+| Slot | Semantics | Allowed content |
+|---|---|---|
+| titleExtra | extension of the title (status tag, count) | antd `Tag` / `Space` with Tags ONLY when the user's spec mentions counts or status |
+| titleRightActions / titleActions | title-bar action area (decoupled from title) | CompanyButton groups |
+| toolbarActions / toolbarRightActions | toolbar left/right actions | CompanyButton groups |
+
+Rules:
+1. **No self-invented content.** Stat-tag clusters like「共 X 条 / 启用 X / 禁用 X」are CUSTOM extras,
+   NOT template built-ins — render them ONLY when the user's requirement explicitly asks for counts.
+   Default: pass NO titleExtra at all.
+2. Toolbar buttons are CompanyButton with TEXT labels (「新增」「导出」) — plain and consistent with
+   the official demos. Do NOT use icon-only buttons, do NOT add dividers/custom spacing around them.
+3. Row-level operations use `ActionCell` (`{ key, label, onClick, danger?, confirm? }`) via
+   `bodyCell` — never hand-build a `<Space>` of buttons per row. Delete-button STANDARD across
+   the library: `confirm: true, confirmTitle: '确定删除？'` WITHOUT `danger` (visually consistent
+   with edit/detail; destructive intent is carried by the confirmation).
+
+### Built-in capability ownership (do NOT hand-add)
+
+The docs tell you WHICH component to use; this table tells you which capabilities the components
+ALREADY SHIP WITH — pass data/config only, never re-add a layer the library already provides.
+
+| Capability | Already built in | Do NOT hand-add |
+|---|---|---|
+| Nav icons | SidebarMenuItem auto-matches a built-in icon by `label` keywords (no `icon` needed; fallback folder-open) | `iconNode={<SettingOutlined/>}` — source renders `iconNode || <SvgIcon>`, so an antd icon fully masks the library icon system (mixed fill/line styles) |
+| Brand logo | Built-in default logo ships in the package since 1.2.39 | `logo="/logo.svg"` — pass only when the user explicitly wants a custom brand |
+| Admin skeleton | AdminLayoutTemplate ships sidebar + tabs + content area | manual CompanySidebar + CompanyMultiTabs assembly (advanced usage only) |
+| Content spacing | Templates ship their own padding/background; zero-spacing container is inside AdminLayoutTemplate | padding/margin/background on `contentStyle` or outer wrappers |
+| Toolbar buttons | Template toolbars are TEXT-label CompanyButtons | antd icons on CompanyButton |
+| Header decorations | The header is managed by the template | self-invented `titleExtra` stat tags unless the user asked for counts |
+
+**Before writing any decoration/icon/extra UI into a business template, ask: does the component
+already ship this capability? If yes, pass data/config only.**
+
+## FormPageTemplate — Form Page (USE FOR create/edit pages)
+
+Provides: page title + back arrow + card-wrapped content area + FIXED bottom action bar (submit/cancel).
+The form body is schema-driven: `SectionTitle` + `BaseInfoForm` with `FormField[]`.
+Do NOT hand-build CompanyForm rows or a bottom button bar — the template already renders them.
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| title | string | REQUIRED. Page title |
+| showBack / onBack | boolean / () => void | back arrow next to title |
+| onSubmit / onCancel | () => void | wired to the fixed bottom bar |
+| submitText / cancelText | string | default 提交 / 取消 |
+| submitLoading | boolean | submit button loading state |
+| footerPosition | 'fixed' \| 'static' | default 'fixed' |
+| showFooter / footer | boolean / ReactNode | `footer` overrides the default bar entirely |
+| topContent | ReactNode | slot above content (Steps, alerts) |
+| contentWrapped | boolean | default true (CompanyCard wrapper); set false for custom content |
+
+### Minimal Example
+
+```tsx
+import { useState } from 'react';
+import { FormPageTemplate, SectionTitle, BaseInfoForm } from '@donglegeyu/company-ui';
+import type { FormField } from '@donglegeyu/company-ui';
+
+const baseFields: FormField[] = [
+  { name: 'name', label: '商品名称', type: 'input', required: true },
+  { name: 'category', label: '商品分类', type: 'select', options: [
+    { label: '电子产品', value: 'electronics' },
+    { label: '服装', value: 'clothing' },
+  ]},
+  { name: 'price', label: '价格', type: 'input-number' },
+];
+
+export function ProductCreatePage() {
+  const [data, setData] = useState<Record<string, string | number | boolean | null | undefined>>({});
+  return (
+    <FormPageTemplate title="新增商品" showBack onSubmit={() => {/* save */}}>
+      <SectionTitle title="基础信息" />
+      <BaseInfoForm value={data} fields={baseFields} onChange={setData} />
+    </FormPageTemplate>
+  );
+}
+```
+
+⚠️ **Common AI mistakes**: hand-assembling `<CompanyCard>` + form fields + a bottom `<Space>` of buttons
+re-implements what FormPageTemplate provides — use the template. For grouped forms, repeat
+`<SectionTitle title="组名" /> + <BaseInfoForm ... />` pairs inside children.
+
+## DetailPageTemplate — Detail Page (USE FOR view/detail pages)
+
+Provides: title bar (back + avatar + primaryName + tags + actions) + info grid + tab panels.
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| title | string | REQUIRED. Page title |
+| showBack / onBack | boolean / () => void | back arrow |
+| avatar / primaryName | ReactNode | identity block beside the title |
+| tags | DetailTagItem[] | status tags next to primaryName |
+| infoFields | DetailFieldItem[] | key-value info grid |
+| infoColumns | number | grid columns, e.g. 3 |
+| tabs | DetailTabItem[] | tab panels below the info grid |
+| activeTab / onTabChange | string / (key) => void | controlled tab |
+| titleActions | ReactNode | decoupled actions (编辑 / 删除 buttons) |
+
+### Data Contracts
+
+```ts
+interface DetailFieldItem { label: string; value: ReactNode }
+interface DetailTagItem { text: ReactNode; variant?: 'default' | 'volcano' | 'success' | 'warning' }
+interface DetailTabItem { key: string; label: ReactNode; children: ReactNode; disabled?: boolean }
+```
+
+### Example (ALL core props: avatar / tags / tabs / titleActions; the 15-row full visual version is in llms-full.txt)
+
+```tsx
+import { Row, Col } from 'antd';
+import { DetailPageTemplate, CompanyTable, CompanyTag, CompanyButton, SectionTitle } from '@donglegeyu/company-ui';
+import type { DetailFieldItem, DetailTagItem, DetailTabItem } from '@donglegeyu/company-ui';
+
+const infoFields: DetailFieldItem[] = [
+  { label: '工单编号', value: 'SC20240615001' },
+  { label: '燃气编码', value: 'GAS-888234' },
+  { label: '客户名称', value: '张三' },
+  { label: '联系电话', value: '138****8888' },
+  { label: '所属公司', value: '城南燃气分公司' },
+  { label: '详细地址', value: '某某小区 12 栋 3 单元 501' },
+];
+const tags: DetailTagItem[] = [
+  { text: '已安检', variant: 'success' },
+  { text: '居民用户', variant: 'default' },
+  { text: '已上传', variant: 'volcano' },
+];
+const tabs: DetailTabItem[] = [
+  {
+    key: 'detail',
+    label: '详情',
+    children: (
+      <div style={{ padding: '0 0 16px' }}>
+        <SectionTitle title="个人信息" />
+        <Row gutter={[24, 16]}>
+          <Col xs={24} sm={12} md={8} lg={6}>出生日期：1985-06-15</Col>
+          <Col xs={24} sm={12} md={8} lg={6}>身份证号：3201**********1234</Col>
+          <Col xs={24} sm={24} md={24} lg={12}>常住地址：江苏省南京市玄武区中山路100号</Col>
+        </Row>
+      </div>
+    ),
+  },
+  {
+    key: 'result',
+    label: '安检结果',
+    children: (
+      <CompanyTable
+        dataSource={[
+          { id: 1, projectName: '燃气表检查', status: '合格' },
+          { id: 2, projectName: '管道密封性', status: '合格' },
+          { id: 3, projectName: '报警器检查', status: '不合格' },
+        ]}
+        columns={[
+          { title: '检查项目', dataIndex: 'projectName' },
+          { title: '状态', dataIndex: 'status', render: (text: string) => <CompanyTag>{text}</CompanyTag> },
+        ]}
+        pagination={false}
+        rowKey="id"
+      />
+    ),
+  },
+];
+
+export function CheckDetailPage() {
+  return (
+    <DetailPageTemplate
+      title="安检详情"
+      showBack
+      avatar="张"
+      primaryName="张三"
+      tags={tags}
+      infoFields={infoFields}
+      infoColumns={3}
+      tabs={tabs}
+      titleActions={<CompanyButton type="primary">编辑</CompanyButton>}
+    />
+  );
+}
+```
+
+## StatisticsListPage — Statistics List Page (USE FOR stat-cards + table pages)
+
+Provides: statistic cards row + top search + advanced filter drawer + table + pagination.
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| columns | StatisticsColumn[] | REQUIRED. Column caption field is `label` — antd's `title` does NOT work |
+| fetchData | (params) => Promise<PageResponse<T>> | strict PageResponse contract (`list`, NOT `records`) |
+| statisticCards | StatisticCardConfig[] | stat cards row; omit to hide |
+| filterFields | StatisticsFilterField[] | advanced filter drawer fields |
+| searchKey | string | param name of the top search box, default 'keyword' |
+| actionColumn | { width?, title?, render(record, index) } | auto-appends a fixed-right action column |
+| onRefresh | (filterParams) => void | shows refresh button when passed |
+| defaultPageSize / rowKey / size / scrollY | — | table behavior |
+
+### Data Contracts
+
+```ts
+interface StatisticCardConfig { key: string; title: string; value: ReactNode }
+interface StatisticsFilterField {
+  key: string; label: string; type: 'input' | 'select' | 'date';
+  placeholder?: string; options?: { label: string; value: string | number }[];
+}
+interface StatisticsColumn<T> {
+  key: string; label: string; visible?: boolean;
+  width?: number; fixed?: 'left' | 'right';
+  render?: (record: T, index: number) => ReactNode;
+}
+```
+
+### Minimal Example
+
+```tsx
+import { StatisticsListPage } from '@donglegeyu/company-ui';
+import type { StatisticsColumn, StatisticCardConfig, PageResponse } from '@donglegeyu/company-ui';
+
+const statisticCards: StatisticCardConfig[] = [
+  { key: 'total', title: '安检总数', value: 1280 },
+  { key: 'passed', title: '已通过', value: 1024 },
+];
+const columns: StatisticsColumn<Record<string, unknown>>[] = [
+  { key: 'deviceName', label: '设备名称' },
+  { key: 'result', label: '安检结果' },
+  { key: 'checkTime', label: '安检时间', width: 180 },
+];
+
+export function CheckResultPage() {
+  return (
+    <StatisticsListPage
+      title="安检结果查询"
+      statisticCards={statisticCards}
+      columns={columns}
+      searchKey="keyword"
+      fetchData={async (): Promise<PageResponse<Record<string, unknown>>> =>
+        ({ list: [], total: 0, pageNum: 1, pageSize: 10 })}
+    />
+  );
+}
+```
+
+⚠️ **Common AI mistakes**: using antd-style `title` in StatisticsColumn (use `label`); reading
+`data.records` (PageResponse is `list`); hand-building the stat-cards row with CompanyCard.
 
 ## Design Tokens
 
@@ -211,8 +514,8 @@ export function UserListPage() {
 interface PageResponse<T> {
   list: T[];       // NOT 'records' or 'dataList'
   total: number;
-  pageNum: number;
-  pageSize: number;
+  pageNum: number;  // NOT 'current' — antd's pagination PROP uses `current`,
+  pageSize: number; // but the PageResponse DATA CONTRACT uses `pageNum`. Do not mix.
 }
 
 // SmartListTemplate field definition — drives both filter form AND table columns
@@ -223,7 +526,7 @@ interface FieldDefinition {
   options?: { label: string; value: string | number }[];
   width?: number;
   hideInFilter?: boolean;
-  sortable?: boolean;
+  sortable?: boolean;  // opt-in, default false — column-header sorting; NOT part of the default business standard, add only when the page truly needs it
 }
 
 // Column settings
@@ -298,7 +601,7 @@ const systemBottomMenus: SidebarMenuItem[] = [
   { key: 'system-settings', label: '系统设置', icon: 'setting' },
 ];
 
-// ⚠️ EVERY first-level menu MUST have icon (SvgIcon built-in name, see list below),
+// icon is OPTIONAL: omitted icons AUTO-MATCH by label. Explicit here to mirror the demo:
 // otherwise the rail renders without icons and differs from the demo
 const businessMenus: SidebarMenuItem[] = [
   { key: 'user', label: '用户管理', icon: 'people-top-card', children: [
@@ -343,7 +646,7 @@ export function AdminPage() {
 Demo-parity nav checklist (self-check after generating):
 1. Icon rail top-to-bottom: logo/brand → domain → Home(home) → Favorites(favorites) → business icons
    (max `visibleMenuCount=6` visible, extras in the "more apps" drawer) → System Settings(setting) → user card
-2. Every first-level `businessMenus` item has `icon`, and the name is in the list below
+2. First-level `businessMenus` items do NOT need `icon` — the sidebar AUTO-MATCHES a built-in icon by label keywords (用户→people-top-card, 商品→commodity, 订单→order, fallback folder-open). Pass `icon` only to override
 3. `homeTab` + `homeContent` passed as a pair (clicking Home opens a landing tab)
 4. NEVER invent icon names — a made-up name renders as blank (fallback needs the full sprite loaded)
 
@@ -422,7 +725,7 @@ interface MultiTabItem {
 
 WARNING: Common AI mistakes when generating admin skeleton:
 - Manually assembling CompanySidebar + CompanyMultiTabs -> use AdminLayoutTemplate instead. Manual assembly is ADVANCED usage only (when you need fully custom layout).
-- Missing `logo` and `brandName` props -> top-left area renders blank
+- Missing `brandName` -> top-left brand area renders blank. `logo` is OPTIONAL since 1.2.39 (built-in default) — do NOT pass a logo path unless the user explicitly wants a custom brand
 - Missing `domains` -> business domain dropdown is empty
 - Missing `businessMenus` -> "more apps" drawer is empty
 - Missing `onLogout` -> logout entry is missing

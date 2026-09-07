@@ -11,7 +11,8 @@
 > 4. NEVER use any type. Define explicit TypeScript interfaces.
 > 5. NEVER use default exports. Always use named exports (export function / export const).
 > 6. ALWAYS prioritize business template components over basic components. For the admin skeleton use AdminLayoutTemplate (do NOT manually assemble CompanySidebar + CompanyMultiTabs). For list pages use SmartListTemplate, not manual CompanyTable + CompanyPagination assembly.
-> 7. Import from @donglegeyu/company-ui, not from antd directly.
+> 7. Capability ownership — components SHIP WITH many capabilities already: sidebar auto-matches menu icons by label keywords (no icon needed; NEVER pass antd icons to iconNode), a built-in default logo exists since 1.2.39 (pass logo only for custom brands), templates ship their own padding/background. Before adding any decoration/icon/extra UI, ask: does the component already provide it? If yes, pass data/config only.
+> 8. Import from @donglegeyu/company-ui, not from antd directly.
 
 
 
@@ -23031,7 +23032,7 @@ function PagePlaceholder({ title }: { title: string }) {
 }
 
 export default () => (
-  <div style={{ height: 520 }}>
+  <div style={{ height: 640 }}>
     <AdminLayoutTemplate
       logo="/logo-dl.svg"
       brandName="物资管理系统"
@@ -23070,7 +23071,7 @@ export default () => (
               <ActionCell
                 buttons={[
                   { key: 'edit', label: '编辑', onClick: () => CompanyMessage.info('编辑 ' + record.id) },
-                  { key: 'delete', label: '删除', onClick: () => CompanyMessage.info('删除 ' + record.id) },
+                  { key: 'delete', label: '删除', confirm: true, confirmTitle: '确定删除？', onClick: () => CompanyMessage.info('删除 ' + record.id) },
                   { key: 'detail', label: '详情', onClick: () => CompanyMessage.info('详情 ' + record.id) },
                 ]}
               />
@@ -23208,7 +23209,7 @@ const dataSource = [
 ];
 
 export default () => (
-  <div style={{ height: 480 }}>
+  <div style={{ height: 640 }}>
     <AdminLayoutTemplate
       logo="/logo-dl.svg"
       brandName="物资管理系统"
@@ -23238,7 +23239,7 @@ export default () => (
               <ActionCell
                 buttons={[
                   { key: 'edit', label: '编辑', onClick: () => CompanyMessage.info('编辑 ' + record.id) },
-                  { key: 'delete', label: '删除', onClick: () => CompanyMessage.info('删除 ' + record.id) },
+                  { key: 'delete', label: '删除', confirm: true, confirmTitle: '确定删除？', onClick: () => CompanyMessage.info('删除 ' + record.id) },
                   { key: 'detail', label: '详情', onClick: () => CompanyMessage.info('详情 ' + record.id) },
                 ]}
               />
@@ -23345,7 +23346,7 @@ export default () => {
   const [activeTabKey, setActiveTabKey] = useState('material-list');
 
   return (
-    <div style={{ height: 420 }}>
+    <div style={{ height: 640 }}>
       <AdminLayoutTemplate
         logo="/logo-dl.svg"
         brandName="物资管理系统"
@@ -23859,7 +23860,7 @@ const businessMenus: SidebarMenuItem[] = [
 ];
 
 const systemBottomMenus: SidebarMenuItem[] = [
-  { key: 'system-settings', label: '系统设置', icon: 'setting' },
+  { key: 'super-search', label: '超级搜索', icon: 'search' },
 ];
 
 export default () => {
@@ -23913,6 +23914,12 @@ export default () => {
         }}
         onMenuClick={(menu) => {
           setActiveKey(menu.key);
+          // 选中二级/叶子菜单时同步高亮所属一级菜单
+          const firstMenu = businessMenus.find((m) =>
+            m.key === menu.key ||
+            m.children?.some((c) => c.key === menu.key || c.children?.some((g) => g.key === menu.key))
+          );
+          if (firstMenu) setActiveFirstMenu(firstMenu.key);
         }}
         expandedKeys={expandedKeys}
         onExpandedKeysChange={setExpandedKeys}
@@ -23963,7 +23970,7 @@ export default () => {
 | activeFirstMenu | 当前激活的一级菜单 key | `string` | - |
 | activeKey | 当前激活的叶子菜单 key | `string` | - |
 | onFirstMenuSelect | 一级菜单选中回调 | `(key: string) => void` | - |
-| onMenuClick | 菜单项点击回调（业务侧负责路由跳转） | `(menu: SidebarMenuItem) => void` | - |
+| onMenuClick | 菜单项点击回调（业务侧负责路由跳转）；点击叶子菜单时组件会先回调 `onFirstMenuSelect` 同步所属一级菜单高亮 | `(menu: SidebarMenuItem) => void` | - |
 | expandedKeys | 二级菜单展开的 key 列表 | `string[]` | - |
 | onExpandedKeysChange | 展开状态变化回调 | `(keys: string[]) => void` | - |
 | secondSidebarFixed | 二级菜单是否固定 | `boolean` | `false` |
@@ -24012,7 +24019,20 @@ export default () => {
 
 ## 内置图标
 
-组件通过内置 `SvgIcon` 渲染菜单图标，支持以下名称：`home`、`favorites`、`star`、`star-fill`、`setting`、`search`、`down`、`drag`、`more-one`、`check-one`、`pin`、`pushpin`、`logout`、`folder-open`。如需自定义图标，可通过 `SidebarMenuItem.iconNode` 传入任意 ReactNode。
+组件通过内置 `SvgIcon` 渲染菜单图标，`icon` 字段支持以下全部键名（与文档站 [图标库](/icon-library) 精选集一致）。**业务菜单可以不传 `icon`**，组件会按菜单名称关键词自动匹配。
+
+| 分类 | 图标键 |
+| --- | --- |
+| 箭头方向 | `down` `up` `left` `right` `refresh` |
+| 操作交互 | `search` `edit` `writing-fluently` `more-one` `more` `more-three` `check-one` `close` `add-one` `minus-one` `delete-two` `save` `preview-open` `preview-close-one` `copy` `zoom-in` `zoom-out` |
+| 系统导航 | `home` `setting` `logout` `favorites` `star` `star-fill` `pin` `pushpin` `bookmark` `tag` `config` `tool` `radar` |
+| 布局排版 | `drag` `density` `more-app` `hamburger-button` `waterfalls-h` `list` `pic` `equalizer` |
+| 业务通用 | `people-top-card` `doc-search` `order` `shopping-cart-del` `buy` `commodity` `file-cabinet` `message-security` `comments` `table` `box` `database-config` `wallet` `scan-setting` `category-management` `user-positioning` `all-application` `folder-open` |
+
+> ⚠️ **图标使用规则**：
+> - 菜单图标**一律使用上表 `icon` 字符串键**，禁止将 `@ant-design/icons` 组件（如 `<SettingOutlined />`）作为菜单图标——antd 图标为填充风格、尺寸体系不同，与本库线性图标混用会导致视觉不一致。
+> - `iconNode` 是给**内置图标集确实没有的图标**预留的逃生口；传了 `iconNode` 会优先生效、不再使用内置图标集。内置图标已覆盖的键请勿使用 `iconNode`。
+> - 传入不在上表中的 `icon` 键时，开发环境会在控制台警告并回退为关键词匹配结果，不会静默渲染空白。
 
 ## 设计说明
 
@@ -25515,7 +25535,7 @@ export default () => {
             <ActionCell
               buttons={[
                 { key: 'edit', label: '编辑', onClick: () => CompanyMessage.info('编辑 ' + record.id) },
-                { key: 'delete', label: '删除', onClick: () => CompanyMessage.info('删除 ' + record.id) },
+                { key: 'delete', label: '删除', confirm: true, confirmTitle: '确定删除？', onClick: () => CompanyMessage.info('删除 ' + record.id) },
                 { key: 'detail', label: '详情', onClick: () => CompanyMessage.info('详情 ' + record.id) },
               ]}
             />
@@ -25700,7 +25720,7 @@ export default () => {
               buttons={[
                 { key: 'edit', label: '编辑', onClick: () => CompanyMessage.info('编辑 ' + record.name) },
                 { key: 'add', label: '新增子级', onClick: () => CompanyMessage.info('新增子级 ' + record.name) },
-                { key: 'delete', label: '删除', onClick: () => CompanyMessage.info('删除 ' + record.name) },
+                { key: 'delete', label: '删除', confirm: true, confirmTitle: '确定删除？', onClick: () => CompanyMessage.info('删除 ' + record.name) },
               ]}
             />
           );
@@ -25915,7 +25935,6 @@ const actionColumn = {
         {
           key: 'delete',
           label: '删除',
-          danger: true,
           confirm: true,
           confirmTitle: `确定删除 ${record.gasCode} 吗？`,
           onClick: () => CompanyMessage.warning('已删除 ' + record.gasCode),
