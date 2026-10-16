@@ -961,7 +961,32 @@ import { Space, Tag, Form, Row, Col, theme } from 'antd';
 
 ***
 
-## 九、与已有 Skill 的关系
+## 九、生成后自动校验（治理闭环环节③）
+
+生成代码不是终点，**校验通过才是**。七条红线与数据契约已做成可执行检查（`ai-lint.mjs`，零依赖纯 Node），生成后必须运行并修复至 0 error：
+
+```bash
+curl -O https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/scripts/ai-lint.mjs
+node ai-lint.mjs src/
+```
+
+| 规则 | 级别 | 检查内容 |
+|---|---|---|
+| `no-antd-import` | error | 从 antd 导入白名单外组件（`import type` 类型导入豁免） |
+| `no-hardcoded-color` | error | 硬编码 `#hex` / `rgb()` 颜色 |
+| `no-important` | error | 样式 `!important` |
+| `no-any` | error | `any` 类型 |
+| `no-default-export` | error | 默认导出 |
+| `no-antd-icon-node` | error | `iconNode` 传 antd 图标 |
+| `page-response-contract` | warning | `.records` / `dataList`（PageResponse 字段是 `list`） |
+| `prefer-template` | warning | CompanyTable+CompanyPagination 手动拼列表 / 手动拼 CompanySidebar+CompanyMultiTabs |
+| `antd-6-api` | warning | `direction="vertical"`（用 orientation）/ `size="middle"`（用 medium） |
+
+**工作流：生成 → 校验 → 修复 → 复跑，直至 0 error**。warning 逐条确认，确属例外加豁免注释（行尾 `// lint-ai-disable-line`，文件头 `/* lint-ai-disable 规则名 */`）并注明原因——豁免是例外登记，不是绕过规范。治理闭环完整模型（五环 / 漂移四来源对策 / 主观意见三级分流 / 回写流程）见文档站「治理闭环 Governance」页。
+
+***
+
+## 十、与已有 Skill 的关系
 
 | Skill                            | 定位            | 何时用                   |
 | -------------------------------- | ------------- | --------------------- |
