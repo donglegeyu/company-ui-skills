@@ -807,7 +807,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 
 ***
 
-## 六、高频反模式（AI 最容易犯的 15 个错）
+## 六、高频反模式（AI 最容易犯的 17 个错）
 
 ### 组件已自带能力（AI 勿手加）——先看这张表再写任何装饰
 
@@ -842,6 +842,8 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 13 | 内容区外层加 `padding` / `margin` / `background` 导致间距叠加 | **业务模板自带内边距和背景**（`SmartListTemplate` 有 `padding: 0 12px` + `--color-bg-layout` 背景）。用 `AdminLayoutTemplate` 时零间距容器在组件内部、`contentStyle` 禁止加 padding/margin/background；手动拼装时内容区容器只写 `flex: 1; overflow: auto; min-width: 0` |
 | 14 | 自创用户没要的插槽内容（如标题旁统计标签「共 X / 启用 X」）、工具栏用图标按钮 | **插槽纪律**：统计标签是自定义 titleExtra 而非模板内置，用户没提计数就不传；工具栏按钮一律 `CompanyButton` + 文字标签；行内操作用 `ActionCell` 配 `bodyCell`（详见「插槽纪律」一节） |
 | 15 | `iconNode: <SettingOutlined />`（antd 图标进菜单） | `icon: 'setting'` 字符串键（键名查 `/icon-library` 精选集）；业务菜单可不写 icon，**组件按菜单名自动匹配**。iconNode 仅限内置图标集没有的图标，禁止传 `@ant-design/icons` 组件（视觉风格不一致） |
+| 16 | `<CompanyTag color="blue">`（preset 色板名） | **preset 色板名（blue/purple/cyan/gold 等约 20 个）是 antd 静态硬编码，绕过主题治理**，渲染出默认蓝。标签颜色一律用语义名 `success` / `processing` / `warning` / `error` / `default`（走品牌化语义 token）或品牌 hex |
+| 17 | 一个列表多个字段都用彩色标签（状态/等级/推送/类型全上标签） | **非必要不用标签**——标签样式一多列表显得杂乱。一般仅当前列表的**核心状态字段**用标签（1 个为宜），其余字段用纯文本/徽标等弱样式 |
 
 ***
 
@@ -962,6 +964,8 @@ node ai-lint.mjs src/
 | `page-response-contract` | warning | `.records` / `dataList`（PageResponse 字段是 `list`） |
 | `prefer-template` | warning | CompanyTable+CompanyPagination 手动拼列表 / 手动拼 CompanySidebar+CompanyMultiTabs |
 | `antd-6-api` | warning | `direction="vertical"`（用 orientation）/ `size="middle"`（用 medium） |
+| `no-preset-tag-color` | warning | `<CompanyTag color="blue">` 等 preset 色板名（绕过主题治理，用语义名 success/processing/warning/error/default） |
+| `excessive-tags` | warning | 单文件标签使用过多（≥6 处）——一般仅列表核心状态字段用标签，非核心字段用纯文本 |
 
 **工作流：生成 → 校验 → 修复 → 复跑，直至 0 error**。warning 逐条确认，确属例外加豁免注释（行尾 `// lint-ai-disable-line`，文件头 `/* lint-ai-disable 规则名 */`）并注明原因——豁免是例外登记，不是绕过规范。治理闭环完整模型（五环 / 漂移四来源对策 / 主观意见三级分流 / 回写流程）见文档站「治理闭环 Governance」页。
 

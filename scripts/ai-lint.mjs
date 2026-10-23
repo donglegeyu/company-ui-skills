@@ -27,7 +27,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 /* ===== 基础配置 ===== */
 
@@ -57,7 +57,15 @@ const RULE_META = {
   'page-response-contract': { level: 'warning', brief: 'PageResponse 字段是 list（不是 records / dataList）' },
   'prefer-template':     { level: 'warning', brief: '业务模板优先于基础组件手动拼装' },
   'antd-6-api':          { level: 'warning', brief: 'antd 6 API 废弃项（orientation / medium）' },
+  'no-preset-tag-color': { level: 'warning', brief: 'Tag 的 color 禁用 preset 色板名（绕过主题治理，用语义名 success/processing/...）' },
+  'excessive-tags':      { level: 'warning', brief: '单文件标签使用 ≥6 处——仅核心状态字段用标签，非核心用纯文本' },
 };
+
+/** antd Tag preset 色板名（静态硬编码，不受 ConfigProvider 主题影响） */
+const TAG_PRESET_COLORS = new Set([
+  'pink', 'red', 'volcano', 'orange', 'gold', 'yellow', 'lime',
+  'green', 'cyan', 'blue', 'geekblue', 'purple', 'magenta',
+]);
 
 /* ===== 文件遍历 ===== */
 
@@ -289,6 +297,61 @@ function checkAntd6Api(lines, ext, add) {
   });
 }
 
+/** 偏移 → { line, col }（line 从 1 起） */
+function offsetToPos(lines, abs) {
+  let off = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (abs < off + lines[i].length + 1) return { line: i + 1, col: abs - off + 1 };
+    off += lines[i].length + 1;
+  }
+  return { line: lines.length, col: 1 };
+}
+
+/** 收集 Tag 开标签匹配（<CompanyTag / <Tag，排除 </Tag>、<Tag.CheckableTag、<TagFoo） */
+function collectTagOpenTags(content, re) {
+  const matches = [];
+  re.lastIndex = 0;
+  let m;
+  while ((m = re.exec(content)) !== null) matches.push(m);
+  return matches;
+}
+
+/** no-preset-tag-color：Tag 的 color 用了 antd preset 色板名（静态色，绕过主题治理） */
+function checkPresetTagColor(lines, ext, add) {
+  if (!CODE_EXT.has(ext)) return;
+  const content = lines.join('\n');
+  const openRe = /<(?:CompanyTag|Tag)(?=[\s/>])[^>]*?>/g;
+  for (const m of collectTagOpenTags(content, openRe)) {
+    const cm = m[0].match(/\bcolor\s*=\s*["'](\w+)["']/);
+    if (!cm || !TAG_PRESET_COLORS.has(cm[1])) continue;
+    const pos = offsetToPos(lines, m.index + cm.index);
+    add(
+      pos.line,
+      pos.col,
+      `Tag 的 color="${cm[1]}" 是 antd preset 色板（静态硬编码，绕过主题治理，渲染出非品牌色）——用语义名 success/processing/warning/error/default 或品牌 hex`,
+      'no-preset-tag-color',
+    );
+  }
+}
+
+/** excessive-tags：单文件标签 JSX ≥6 处（warning，提示「非必要不用标签」） */
+function checkExcessiveTags(lines, ext, add) {
+  if (!CODE_EXT.has(ext)) return;
+  const content = lines.join('\n');
+  const openRe = /<(?:CompanyTag|Tag)(?=[\s/>])/g;
+  const count = (content.match(openRe) || []).length;
+  if (count < 6) return;
+  const first = content.search(openRe);
+  if (first === -1) return;
+  const pos = offsetToPos(lines, first);
+  add(
+    pos.line,
+    pos.col,
+    `本文件标签使用 ${count} 处——标签样式过多列表显得杂乱，一般仅核心状态字段用标签（1 个为宜），非核心字段用纯文本`,
+    'excessive-tags',
+  );
+}
+
 /** prefer-template：文件级启发式（import 组合判断），warning */
 function checkPreferTemplate(lines, ext, add, pkgImports) {
   if (!CODE_EXT.has(ext) || !pkgImports.size) return;
@@ -346,6 +409,8 @@ function lintFile(file) {
   checkAntdIconNode(lines, ext, add);
   checkContract(lines, ext, add);
   checkAntd6Api(lines, ext, add);
+  checkPresetTagColor(lines, ext, add);
+  checkExcessiveTags(lines, ext, add);
   checkPreferTemplate(lines, ext, add, pkgImports);
   return problems;
 }
