@@ -3,11 +3,38 @@ name: "company-ui-for-agents"
 description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强制 AI 使用 CompanyXxx 组件（而非 antd 原生）、遵循品牌令牌 #F95914、遵守类型安全和样式规范。在任何使用 company-ui 的项目中生成 React 代码时必须加载。"
 ---
 
+<!-- company-ui-for-agents skill
+     version: 1.2.0
+     updated: 2026-10-23
+     source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
+     remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
+-->
+
 # Company UI for Agents
 
+> **Skill 版本**：`1.2.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+>
 > **版本基准**：`@donglegeyu/company-ui@1.2.41`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
+
+## 〇、版本自检（每次会话首次使用本 Skill 时执行一次）
+
+本 Skill 采用**快照式安装**（复制到本机 skills 目录后不随源仓库自动更新）。为防止「规范源已升级、本机快照停在旧版」的规范演进漂移，**每次会话首次使用本 Skill 时先做一次版本自检**——一次 curl（≤3 秒超时），失败静默跳过、不阻塞任务：
+
+1. 读取本文件头部注释的 `version:`（即本机安装版本，已随文件加载进上下文，无需重读文件）
+2. 拉取远端最新版本：`curl -fsSL --max-time 3 https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION`
+3. **远端更新** → 向用户输出一句升级提示（命令见下），然后**按本文件内容继续当前任务**（旧版规则仍远好于没有规则）
+4. **版本一致或网络失败** → 静默继续，不输出任何内容
+
+升级命令（整文件覆盖为最新版，新会话生效）：
+
+```bash
+curl -fsSL -o ~/.trae-cn/skills/company-ui-for-agents/SKILL.md \
+  https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
+```
+
+> **给维护者**：任何 SKILL.md 内容变更，必须（1）同步 bump 头部 `version:` 注释与「Skill 版本」引用行，（2）同步更新仓库根的 `VERSION` 文件（两者数值一致），（3）在尾部「版本历史」追加一行，（4）保持本地 `.trae/skills/` 与 GitHub 双源同步。
 
 ## 何时调用
 
@@ -981,3 +1008,13 @@ node ai-lint.mjs src/
 | `dumi-theme-customizer` | Dumi 主题定制 | 修改文档站点样式 |
 
 本 Skill 是其他三个 Skill 的规则基础——`pc-prototype-builder` 和 `smart-list-template-builder` 的代码生成规则均源自本 Skill 的七条红线和组件清单。
+
+***
+
+## 版本历史
+
+| 版本 | 日期 | 变更 |
+|---|---|---|
+| 1.2.0 | 2026-10-23 | 反模式 15→17 条（Tag preset 色板禁用 / 非必要不用标签）；校验器 v1.1.0 新增 `no-preset-tag-color`、`excessive-tags`；新增版本自检机制 |
+| 1.1.0 | 2026-10-22 | 六条红线→七条（图标一律用内置图标键）；反模式 12→15 条；新增「九、生成后自动校验」章节（ai-lint.mjs，9 条规则）；AdminLayoutTemplate Props 口径源码级修正（businessMenus 唯一必填、底部默认「超级搜索」） |
+| 1.0.0 | 2026-10-19 | 初版：六条红线、组件清单、令牌规范、数据契约、12 条反模式 |
