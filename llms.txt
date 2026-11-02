@@ -185,7 +185,7 @@ Do NOT hand-build CompanyForm rows or a bottom button bar — the template alrea
 ```tsx
 import { useState } from 'react';
 import { FormPageTemplate, SectionTitle, BaseInfoForm } from '@donglegeyu/company-ui';
-import type { FormField } from '@donglegeyu/company-ui';
+import type { FormField, FormValues } from '@donglegeyu/company-ui';
 
 const baseFields: FormField[] = [
   { name: 'name', label: '商品名称', type: 'input', required: true },
@@ -197,7 +197,8 @@ const baseFields: FormField[] = [
 ];
 
 export function ProductCreatePage() {
-  const [data, setData] = useState<Record<string, string | number | boolean | null | undefined>>({});
+  // onChange 第二参数 meta 标记 AI 草稿来源，纯人工表单可忽略
+  const [data, setData] = useState<FormValues>({});
   return (
     <FormPageTemplate title="新增商品" showBack onSubmit={() => {/* save */}}>
       <SectionTitle title="基础信息" />
