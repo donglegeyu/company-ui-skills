@@ -4,17 +4,17 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.2.0
-     updated: 2026-10-23
+     version: 1.6.0
+     updated: 2026-11-04
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.2.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.6.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
-> **版本基准**：`@donglegeyu/company-ui@1.2.41`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
+> **版本基准**：`@donglegeyu/company-ui@1.2.45`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
 
@@ -324,20 +324,65 @@ root.render(
 | 图标探索器 | `IconExplorer` | 图标搜索 |
 | IconPark Hook | `useIconPark` | IconPark 图标 Hook |
 
-### 业务模板组件（10 个）
+### 业务模板组件（12 个）
 
 | 组件 | 导出名 | 用途 |
 |---|---|---|
 | 布局模板 | `AdminLayoutTemplate` | ⭐ 后台骨架一步到位（侧边栏+页签+内容区，页签/高亮/间距全托管） |
 | 智能列表模板 | `SmartListTemplate` | 筛选+表格+分页+列设置+视图切换 |
 | 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格 |
-| 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏 |
+| 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏（独立页） |
+| 抽屉表单 | `DrawerFormTemplate` | 抽屉承载新增/编辑，内置 footer 与关闭拦截（440px，遮罩禁关） |
+| 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，顶部固定+内容区滚动+多 Tab（640px，遮罩可关） |
 | 详情页模板 | `DetailPageTemplate` | 信息卡片+标签+多 Tab |
 | 侧边导航 | `CompanySidebar` | 左侧双层导航 |
 | 多页签栏 | `CompanyMultiTabs` | 浏览器式页签栏 |
 | 筛选表单 | `FilterForm` | 独立筛选表单 |
 | 列设置面板 | `ColumnSettingsPanel` | 列可见性/顺序设置 |
 | 图标选择器 | `IconSelect` | 图标选择器 |
+| 动作执行闸门 | `AiActionGuard` | ⭐ AI 动作白名单（allow / confirm / deny + 实时权限 + 幂等 + 审计），AI 发起的动作必须经此执行 |
+
+### AI 动作执行闸门（AiActionGuard）
+
+**硬规则：AI 发起的任何动作必须经过 `AiActionGuard`，禁止在业务代码里绕过闸门直接执行**（例如把模型返回的 action 直接 `fetch` / 调用业务接口）。`AiAssistantDock` 可通过 `actionGuard` 属性一次性给整块画布接线（关闭态同样生效）。
+
+```tsx
+import { AiActionGuard, CompanyButton, useAiAction } from '@donglegeyu/company-ui';
+import type { AiActionAuditEvent, AiActionParams, AiActionType } from '@donglegeyu/company-ui';
+
+// 宿主实现：每次执行前实时校验权限，禁止缓存结果
+const checkPermission = (action: AiActionType, params: AiActionParams) => true;
+// 宿主实现：审计落点（userId / sessionId 由闸门注入事件）
+const reportAudit = (event: AiActionAuditEvent) => { /* 上报审计服务 */ };
+
+export function AiCanvas() {
+  return (
+    <AiActionGuard
+      domain="goods"                 // 必须由服务端/宿主注入，禁止取自 URL 或用户输入
+      userId="u-1001"                // 宿主传入，组件不推断
+      checkPermission={checkPermission} // 每次执行前实时调用，禁止缓存结果
+      onAudit={reportAudit}          // 每个 run / undo 结束后回调
+    >
+      <CanvasBody />
+    </AiActionGuard>
+  );
+}
+
+function CanvasBody() {
+  const { run } = useAiAction();
+  const handleExport = async () => {
+    const result = await run('export', { scope: 'filtered' }, () => ({ data: 'ok' }));
+    if (!result.ok) return; // denied / forbidden / cancelled / error
+    // 只有 ok 才继续后续 UI 反馈
+  };
+  return <CompanyButton onClick={handleExport}>导出</CompanyButton>;
+}
+```
+
+- 默认策略：`allow` = navigate / open-record / prefill-filter / backfill / rollback / validate / query / create-draft / explain / close-tab / undo；`confirm` = 同会话第 2 次及以上的 navigate、export、attachment-download、声明未保存修改的 rollback；`deny` = submit / publish / delete / bulk-update / approve。
+- 未知动作一律 `deny`，不存在「未禁止即可执行」。
+- 写类动作（submit / publish / delete / bulk-update / approve / 落库的 create-draft）必须带 `idempotencyKey`，同一键只执行一次；超时不得自动重试。
+- 失败分支返回 `{ ok: false, reason }`，不抛异常打断页面；`checkPermission` 抛错按拒绝处理并记 error 审计。
 
 ***
 
@@ -350,9 +395,9 @@ root.render(
 | `colorPrimary` | `#F95914` | 主色（按钮/链接/选中态） |
 | `colorPrimaryHover` | `#E04E0E` | 主色悬停 |
 | `colorPrimaryBg` | `#FFF1E6` | 选中行浅色背景 |
-| `colorSuccess` | `#00B42A` | 成功 |
-| `colorWarning` | `#FF7D00` | 警告 |
-| `colorError` | `#F53F3F` | 错误 |
+| `colorSuccess` | `#52C41A` | 成功 |
+| `colorWarning` | `#FAAD14` | 警告 |
+| `colorError` | `#FF4D4F` | 错误 |
 | `colorBgContainerDisabled` | `#f5f5f5` | 禁用背景（纯灰） |
 | `borderRadius` | `6` | 圆角 |
 | `controlHeight` | `32` | 控件高度 |
@@ -543,6 +588,72 @@ export function ProductCreatePage() {
 
 分组表单：children 里重复「`<SectionTitle title="组名" />` + `<BaseInfoForm ... />`」组合即可。
 
+### 新增/编辑表单形态选型（Drawer vs Modal vs 独立页）
+
+这是新增/编辑表单的**唯一选型口径**，不要凭习惯使用 Modal。
+
+| 场景 | 承载形态 | 组件 |
+|---|---|---|
+| 新增表单 | 抽屉 | `DrawerFormTemplate`（底层 `CompanyDrawer` + `BaseInfoForm`） |
+| 编辑、字段少 | 抽屉 | `DrawerFormTemplate` |
+| 编辑、字段多 / 多 Tab / 含子表 | 独立表单页 | `FormPageTemplate` |
+| 只读查看 | 抽屉 | `DrawerDetailTemplate`（640，遮罩可关，顶部固定+内容区滚动） |
+| 二次确认（删除/批量操作） | 弹窗 | `CompanyModal` |
+
+硬性规则：
+
+- **新增不再用 Modal**；所有新增/编辑表单默认走 `DrawerFormTemplate`。
+- **同一列表的新增/编辑形态必须一致**：要么都用 Drawer，要么都走独立页，禁止同表混用 Drawer/Modal。
+- **Drawer 需自建 footer**：直接用本模板，`DrawerFormTemplate` 已内置「取消 + 保存」；禁止各业务页重复手写 footer。
+- **`maskClosable={false}`**：表单类抽屉默认禁止点遮罩关闭（`DrawerFormTemplate` 默认 false），避免填写中途误触丢数据；只有纯确认类 `CompanyModal` 才允许点遮罩关闭。
+- **保存中拦截关闭**：`submitLoading` 为 true 时关闭图标/取消/遮罩全部拦截，避免请求未完成丢失状态。
+- **宽度约定**：表单抽屉默认 440px；详情抽屉 `DrawerDetailTemplate` 默认 640px；两档之外（大量字段 / 多 Tab / 子表的复杂编辑）转独立表单页 `FormPageTemplate`。
+- **关闭后刷新列表**：保存成功后关闭抽屉并重新拉取/刷新列表数据。
+- **禁止把 `FormPageTemplate` 塞进 Drawer**：其源码为 `position: absolute; inset: 0`，在抽屉内会定位失效。
+
+最小示例：
+
+```tsx
+import { useState, useRef } from 'react';
+import { DrawerFormTemplate, BaseInfoForm, CompanyButton, CompanySpace } from '@donglegeyu/company-ui';
+import type { FormField, FormValues, BaseInfoFormRef } from '@donglegeyu/company-ui';
+
+const fields: FormField[] = [
+  { name: 'name', label: '名称', type: 'input', required: true, rules: [{ required: true, message: '请输入名称' }] },
+];
+
+export function EditDrawer() {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<FormValues>({});
+  const [saving, setSaving] = useState(false);
+  const formRef = useRef<BaseInfoFormRef>(null);
+
+  const submit = async () => {
+    const valid = await formRef.current?.validate();
+    if (!valid) return;
+    setSaving(true);
+    setSaving(false);
+    setOpen(false);
+  };
+
+  return (
+    <CompanySpace orientation="vertical">
+      <CompanyButton onClick={() => setOpen(true)}>编辑</CompanyButton>
+      <DrawerFormTemplate
+        open={open}
+        onClose={() => setOpen(false)}
+        title="编辑"
+        submitLoading={saving}
+        onSubmit={submit}
+        maskClosable={false}
+      >
+        <BaseInfoForm ref={formRef} value={data} fields={fields} layout="vertical" onChange={setData} />
+      </DrawerFormTemplate>
+    </CompanySpace>
+  );
+}
+```
+
 ### DetailPageTemplate 速查（详情页：查看）
 
 模板提供：标题栏（返回 + 头像 + 主体名称 + 标签 + 操作区）+ 信息栅格 + Tab 面板。
@@ -687,7 +798,8 @@ AI 生成完整后台页面时，**必须使用** **`AdminLayoutTemplate`**—�
 |---|---|---|
 | 列表页 | `SmartListTemplate` | 用户管理 / 订单列表 / 数据查询 |
 | 统计列表页 | `StatisticsListPage` | 仪表盘 / 运营数据 / 报表 |
-| 表单页 | `FormPageTemplate` | 新建 / 编辑 / 配置 |
+| 表单页（独立页） | `FormPageTemplate` | 字段多 / 多 Tab / 含子表的新建、编辑、配置 |
+| 抽屉表单 | `DrawerFormTemplate` | 轻量新增 / 编辑 / 只读查看 |
 | 详情页 | `DetailPageTemplate` | 用户详情 / 订单详情 |
 
 #### 骨架布局契约（间距已固化在组件内部，无需关心）
@@ -835,7 +947,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 
 ***
 
-## 六、高频反模式（AI 最容易犯的 17 个错）
+## 六、高频反模式（AI 最容易犯的 26 个错）
 
 ### 组件已自带能力（AI 勿手加）——先看这张表再写任何装饰
 
@@ -872,6 +984,15 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 15 | `iconNode: <SettingOutlined />`（antd 图标进菜单） | `icon: 'setting'` 字符串键（键名查 `/icon-library` 精选集）；业务菜单可不写 icon，**组件按菜单名自动匹配**。iconNode 仅限内置图标集没有的图标，禁止传 `@ant-design/icons` 组件（视觉风格不一致） |
 | 16 | `<CompanyTag color="blue">`（preset 色板名） | **preset 色板名（blue/purple/cyan/gold 等约 20 个）是 antd 静态硬编码，绕过主题治理**，渲染出默认蓝。标签颜色一律用语义名 `success` / `processing` / `warning` / `error` / `default`（走品牌化语义 token）或品牌 hex |
 | 17 | 一个列表多个字段都用彩色标签（状态/等级/推送/类型全上标签） | **非必要不用标签**——标签样式一多列表显得杂乱。一般仅当前列表的**核心状态字段**用标签（1 个为宜），其余字段用纯文本/徽标等弱样式 |
+| 18 | 新增表单用 `CompanyModal` | 新增/编辑表单统一用 `DrawerFormTemplate`；`CompanyModal` 只做二次确认 |
+| 19 | 同一列表新增用 Drawer、编辑用 Modal（或反之） | **同一列表的新增/编辑形态必须一致** |
+| 20 | 把 `FormPageTemplate` 放进 Drawer | `FormPageTemplate` 是 `position: absolute; inset: 0` 的页面骨架，只能作为独立页；抽屉用 `DrawerFormTemplate` |
+| 21 | 每个业务页手写 Drawer footer（取消/保存/loading/拦截关闭） | 统一用 `DrawerFormTemplate`，footer、`maskClosable={false}`、保存中拦截关闭均已内置 |
+| 22 | 用表单抽屉 `DrawerFormTemplate` 做只读详情 | 只读详情用 `DrawerDetailTemplate`（640px、遮罩可关、顶部区固定）；表单抽屉 `maskClosable=false` + footer 操作栏的约定与只读场景相悖 |
+| 23 | 手拼 `CompanyDrawer` + children 描述列表当详情抽屉 | 统一用 `DrawerDetailTemplate`：顶部固定/内容区滚动/Tab 切换/宽度口径均已内置，禁止各页重复实现滚动结构 |
+| 24 | AI 动作直连接口：把模型返回的 action 直接 `fetch` / 调用业务 API | 所有 AI 发起的动作必须经 `AiActionGuard` 的 `run` 走策略/确认/实时权限/幂等/审计，禁止绕过闸门 |
+| 25 | 权限结果缓存复用：`checkPermission` 只调一次、结果存 state 或跨动作复用 | 每次 `run` / `canRun` 都实时调用 `checkPermission`，组件不缓存任何权限结果 |
+| 26 | 未知动作默认放行：策略表里没登记就直接执行 | 白名单 + 默认拒绝：未知动作一律返回 `{ ok: false, reason: 'denied' }` |
 
 ***
 
@@ -910,11 +1031,14 @@ import {
   SmartListTemplate,
   StatisticsListPage,
   FormPageTemplate,
+  DrawerFormTemplate,
   DetailPageTemplate,
   CompanySidebar,        // 高级用法：手动拼装骨架时才用
   CompanyMultiTabs,      // 高级用法：手动拼装骨架时才用
   FilterForm,
   ColumnSettingsPanel,
+  AiActionGuard,         // AI 动作闸门：AI 发起的动作必须经此执行
+  useAiAction,           // 读取 canRun / run / undo
 } from '@donglegeyu/company-ui';
 
 // 主题
@@ -1016,6 +1140,9 @@ node ai-lint.mjs src/
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.6.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.45`（补 `DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供）；GitHub 源仓库补齐本地 1.3.0~1.5.0 演进（12 业务模板 / AiActionGuard 章节 / 反模式 17→26 条 / Token 色板对齐 antd 语义色）；FormPageTemplate 示例沿用 `FormValues` + AiFormChangeMeta 对齐版；AiActionGuard 示例补宿主回调 `checkPermission`/`onAudit` 定义（verify 关卡拦截） |
+| 1.5.0 | 2026-11-02 | 新增 `AiActionGuard`（AI 动作执行闸门：allow/confirm/deny 默认策略、实时权限、写类幂等、固定字段审计）；业务模板表 11→12；反模式 23→26 条（AI 动作直连接口 / 权限结果缓存复用 / 未知动作默认放行）；新增「AI 动作执行闸门」小节 |
+| 1.4.0 | 2026-10-30 | 新增 `DrawerDetailTemplate`（抽屉详情：640px、遮罩可关、顶部固定+内容区滚动+多 Tab）；宽度口径统一为 440（表单）/640（详情）两档，作废 520 上限说法；反模式 21→23 条；选型表「只读查看」改指 `DrawerDetailTemplate` |
 | 1.2.0 | 2026-10-23 | 反模式 15→17 条（Tag preset 色板禁用 / 非必要不用标签）；校验器 v1.1.0 新增 `no-preset-tag-color`、`excessive-tags`；新增版本自检机制 |
 | 1.1.0 | 2026-10-22 | 六条红线→七条（图标一律用内置图标键）；反模式 12→15 条；新增「九、生成后自动校验」章节（ai-lint.mjs，9 条规则）；AdminLayoutTemplate Props 口径源码级修正（businessMenus 唯一必填、底部默认「超级搜索」） |
 | 1.0.0 | 2026-10-19 | 初版：六条红线、组件清单、令牌规范、数据契约、12 条反模式 |
