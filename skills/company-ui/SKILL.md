@@ -4,7 +4,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.6.0
+     version: 1.7.0
      updated: 2026-11-04
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
@@ -12,9 +12,9 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.6.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.7.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
-> **版本基准**：`@donglegeyu/company-ui@1.2.45`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
+> **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
 
@@ -194,7 +194,7 @@ root.render(
 
 ## 三、组件全清单
 
-### 基础组件（72 个，按分组）
+### 基础组件（80 个，按分组）
 
 所有基础组件从 `@donglegeyu/company-ui` 具名导出，命名规则 `Company + 组件名`。
 
@@ -279,6 +279,21 @@ root.render(
 | 文字提示 | `CompanyTooltip` | Tooltip |
 | 漫游式引导 | `CompanyTour` | 引导教程 |
 | 树形控件 | `CompanyTree` | 树形控件 |
+
+#### 图表 Charts
+
+| 组件 | 导出名 | 用途 |
+|---|---|---|
+| 图表 | `CompanyChart` | 通用图表（AntV G2 5.x spec 直传，开箱即用） |
+| 折线图 | `CompanyLineChart` | 预设折线图 |
+| 面积图 | `CompanyAreaChart` | 预设面积图 |
+| 柱形图 | `CompanyBarChart` | 预设柱形图 |
+| 分组柱形图 | `CompanyGroupedBarChart` | 预设分组柱形图 |
+| 堆叠柱形图 | `CompanyStackedBarChart` | 预设堆叠柱形图 |
+| 饼图 | `CompanyPieChart` | 预设饼图 |
+| 环形图 | `CompanyDonutChart` | 预设环形图 |
+
+> 图表族内置品牌色板（`CHART_COLOR_10`/`CHART_COLOR_20`）与 `companyChartTheme`，默认注入品牌主题，禁止在业务代码里硬编码图表配色；优先用预设组件，只有预设覆盖不了的自定义图形才用 `CompanyChart` 直传 G2 spec。
 
 #### 反馈 Feedback
 
@@ -1140,6 +1155,7 @@ node ai-lint.mjs src/
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.7.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.47`（`CompanyChart` 图表组件族自 1.2.47 起提供）；基础组件清单 72→80，新增「图表 Charts」分组（`CompanyChart` + 7 个预设 Line/Area/Bar/GroupedBar/StackedBar/Pie/Donut，基于 AntV G2 5.x，内置品牌色板，禁止硬编码图表配色、预设优先） |
 | 1.6.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.45`（补 `DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供）；GitHub 源仓库补齐本地 1.3.0~1.5.0 演进（12 业务模板 / AiActionGuard 章节 / 反模式 17→26 条 / Token 色板对齐 antd 语义色）；FormPageTemplate 示例沿用 `FormValues` + AiFormChangeMeta 对齐版；AiActionGuard 示例补宿主回调 `checkPermission`/`onAudit` 定义（verify 关卡拦截） |
 | 1.5.0 | 2026-11-02 | 新增 `AiActionGuard`（AI 动作执行闸门：allow/confirm/deny 默认策略、实时权限、写类幂等、固定字段审计）；业务模板表 11→12；反模式 23→26 条（AI 动作直连接口 / 权限结果缓存复用 / 未知动作默认放行）；新增「AI 动作执行闸门」小节 |
 | 1.4.0 | 2026-10-30 | 新增 `DrawerDetailTemplate`（抽屉详情：640px、遮罩可关、顶部固定+内容区滚动+多 Tab）；宽度口径统一为 440（表单）/640（详情）两档，作废 520 上限说法；反模式 21→23 条；选型表「只读查看」改指 `DrawerDetailTemplate` |
