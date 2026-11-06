@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.7.0
-     updated: 2026-11-04
+     version: 1.8.0
+     updated: 2026-11-06
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.7.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.8.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -35,6 +35,33 @@ curl -fsSL -o ~/.trae-cn/skills/company-ui-for-agents/SKILL.md \
 ```
 
 > **给维护者**：任何 SKILL.md 内容变更，必须（1）同步 bump 头部 `version:` 注释与「Skill 版本」引用行，（2）同步更新仓库根的 `VERSION` 文件（两者数值一致），（3）在尾部「版本历史」追加一行，（4）保持本地 `.trae/skills/` 与 GitHub 双源同步。
+
+### 包版本自检（仅业务项目，company-ui 仓库自身不跑）
+
+上面的 Skill 版本自检只能发现「规范快照落后」，发现不了业务项目里**安装的包本身落后**。每次会话首次使用本 Skill 时，与 Skill 版本自检**同批**执行一次包版本自检，三处比对：
+
+| 来源 | 读取方式 |
+|---|---|
+| 项目声明 | 业务项目 `package.json` 的 `dependencies` / `devDependencies` 中 `@donglegeyu/company-ui` 的 semver |
+| 实际安装 | `node_modules/@donglegeyu/company-ui/package.json` 的 `version` |
+| registry 最新 | `npm view @donglegeyu/company-ui version --fetch-timeout=3000 --fetch-retries=0`（超时保护，失败静默跳过） |
+
+判定与动作：
+
+1. **实际安装低于 registry latest**，或**实际安装不满足项目声明的 semver** → 向用户输出一句升级提示 + 升级命令，然后**继续当前任务**（不阻塞）
+2. **三者一致**（实际安装满足声明范围且等于 latest）→ 静默，不输出
+3. **读不到 `node_modules`**（未安装 / 非业务项目）或 `npm view` 网络失败 → 静默跳过，不阻塞任务
+
+升级命令（执行后需**重启 dev server** 才生效）：
+
+```bash
+npm i @donglegeyu/company-ui@latest
+```
+
+约束：
+
+- 这条自检**只针对业务项目**；在 `company-ui` 仓库自身开发组件库时不需要跑（仓库自身的版本由发布流程管理）
+- 自检**只输出终端提示**，禁止把版本号常量写进生成的业务代码（如 `const COMPANY_UI_VERSION = '1.2.47'`）
 
 ## 何时调用
 
@@ -497,13 +524,75 @@ interface FieldDefinition {
 | 插槽 | 语义 | 允许的内容 |
 |---|---|---|
 | `titleExtra` | 标题的延伸/补充（状态标签、计数） | antd `Tag` / `Space` 包 Tag——**仅当用户需求明确提到计数/状态时才传** |
-| `titleRightActions` / `titleActions` | 标题栏右侧独立操作区 | CompanyButton 按钮组 |
-| `toolbarActions` / `toolbarRightActions` | 工具栏左侧/右侧操作 | CompanyButton 按钮组 |
+| `titleActions` / `titleRightActions` | 标题栏最右侧独立操作区——**只放页面级帮助入口**（「快速上手」） | 帮助入口文案 + `CompanyTypography.Link`；**禁止放业务按钮** |
+| `toolbarActions` | 工具栏左侧主操作区——业务按钮 | `CompanyButton` 按钮组（主 → 次 → 危险） |
+| `toolbarRightActions` | 工具栏右侧次要/工具区——次要或危险操作 | `CompanyButton` 按钮组（危险操作放最右） |
 
 三条规则：
 1. **禁止自创内容**：像「共 X 条 / 启用 X / 禁用 X」这类统计标签是**自定义 titleExtra，非模板内置**——用户需求里没提计数就完全不传 titleExtra（默认：不传）
 2. 工具栏/操作区按钮一律 `CompanyButton` + **文字标签**（「新增」「导出」），与官方 demo 一致；**禁止**图标按钮、禁止在按钮组外加 Divider/自定义间距
 3. 行内操作用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }`）配 `bodyCell` 渲染——禁止每行手拼 `<Space>` + CompanyButton。**删除按钮标准：`confirm: true, confirmTitle` 二次确认，不用 `danger`**（全库统一）
+
+#### 列表页按钮布局纪律（titleActions 只放帮助入口）
+
+列表页按钮按「语义 + 容器」固定归属，**禁止凭感觉挑插槽**：
+
+1. **`titleActions` 只放帮助类入口**（如「快速上手」），**明确禁止**放列表业务按钮：新增、导出、批量操作、删除等一律不放。
+2. **列表业务按钮统一进工具栏**：左侧主操作区 `toolbarActions`，右侧次要/工具区 `toolbarRightActions`。
+3. **排列顺序统一为「主操作 → 次级操作 → 危险操作」**（如「新增」→「导出」→「批量删除」），同一容器内用 `<CompanySpace size={8}>` 保持 8px 间距与分组，危险操作放最右。
+4. **需要往页面右侧加按钮时，优先复用页面标题区插槽**（`SmartListTemplate` 用 `titleActions` / `titleExtra`；`StatisticsListPage` 用 `titleActions` / `titleExtra`），不要默认新开一条工具栏。标题区承载页面级入口：帮助入口文案用「快速上手」，提示文案「请查看 系统使用指南」，不承载业务动作。
+5. **`StatisticsListPage` 的工具栏限制**：它没有 `toolbarActions` / `toolbarRightActions`，工具栏自定义槽是 `toolbarLeftExtra`（搜索框右侧）与 `toolbarRightExtra`（列设置左侧）——业务按钮（新增/导出/批量）进这两个槽；其 `titleActions` 仍只放帮助入口。
+
+```tsx
+// 以下是 dumi 文档 demo 形态的完整示例（业务代码中请改为具名导出，见红线 5）
+import React from 'react';
+import {
+  CompanyButton,
+  CompanySpace,
+  SmartListTemplate,
+} from '@donglegeyu/company-ui';
+import type { FieldDefinition } from '@donglegeyu/company-ui';
+
+const fields: FieldDefinition[] = [
+  { key: 'name', label: '名称', type: 'input' },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'select',
+    options: [
+      { label: '启用', value: 'enabled' },
+      { label: '停用', value: 'disabled' },
+    ],
+  },
+];
+
+export default function UserListPage() {
+  return (
+    <SmartListTemplate
+      title="用户列表"
+      fields={fields}
+      dataSource={[]}
+      // 标题区只放页面级帮助入口，不放业务按钮
+      titleActions={
+        <CompanyButton type="link" onClick={() => window.open('/system-guide', '_blank')}>
+          快速上手
+        </CompanyButton>
+      }
+      // 主操作 → 次级操作，同一容器内 8px 间距
+      toolbarActions={
+        <CompanySpace size={8}>
+          <CompanyButton type="primary">新增</CompanyButton>
+          <CompanyButton>导出</CompanyButton>
+        </CompanySpace>
+      }
+      // 危险操作放右侧工具区（最右）
+      toolbarRightActions={<CompanyButton danger>批量删除</CompanyButton>}
+    />
+  );
+}
+```
+
+> 反例：`titleActions={<CompanyButton type="primary">新增</CompanyButton>}`——标题区空间窄、语义是页面级信息，塞业务按钮会与页面操作混淆，窄屏下还会挤压标题。
 
 ### ColumnField（列设置）
 
@@ -770,8 +859,14 @@ export function CheckDetailPage() {
 | filterFields | StatisticsFilterField[] | 高级筛选抽屉字段 |
 | searchKey | string | 顶部搜索框提交的参数名，默认 'keyword' |
 | actionColumn | { width?, title?, render } | 自动追加固定右侧的操作列 |
+| titleExtra | ReactNode | 紧跟标题右侧（状态标签、计数/月份选择器） |
+| titleActions | ReactNode | 标题栏最右侧独立操作区——**只放帮助入口**（「快速上手」），禁放业务按钮 |
+| toolbarLeftExtra | ReactNode | 工具栏左侧自定义区（搜索框右侧）——新增/导出等业务按钮放这里 |
+| toolbarRightExtra | ReactNode | 工具栏右侧自定义区（列设置左侧）——次要/危险按钮放这里 |
 | onRefresh | (filterParams) => void | 传入才显示刷新按钮 |
 | defaultPageSize / rowKey / size / scrollY | — | 表格行为 |
+
+> **按钮归属**：本模板**没有** `toolbarActions` / `toolbarRightActions`。需要往页面右侧加按钮时，优先复用标题区插槽（`titleActions` / `titleExtra`），不要为此新开工具栏；但业务类按钮（新增/导出/批量）按「列表页按钮布局纪律」进 `toolbarLeftExtra` / `toolbarRightExtra`，`titleActions` 只放「快速上手」帮助入口（文案「快速上手」，提示「请查看 系统使用指南」）。
 
 最小示例：
 
@@ -962,7 +1057,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 
 ***
 
-## 六、高频反模式（AI 最容易犯的 26 个错）
+## 六、高频反模式（AI 最容易犯的 27 个错）
 
 ### 组件已自带能力（AI 勿手加）——先看这张表再写任何装饰
 
@@ -1008,6 +1103,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 24 | AI 动作直连接口：把模型返回的 action 直接 `fetch` / 调用业务 API | 所有 AI 发起的动作必须经 `AiActionGuard` 的 `run` 走策略/确认/实时权限/幂等/审计，禁止绕过闸门 |
 | 25 | 权限结果缓存复用：`checkPermission` 只调一次、结果存 state 或跨动作复用 | 每次 `run` / `canRun` 都实时调用 `checkPermission`，组件不缓存任何权限结果 |
 | 26 | 未知动作默认放行：策略表里没登记就直接执行 | 白名单 + 默认拒绝：未知动作一律返回 `{ ok: false, reason: 'denied' }` |
+| 27 | 把新增/导出/批量删除等业务按钮塞进 `titleActions`（列表页标题区） | **标题区只放帮助入口**（「快速上手」）；业务按钮进 `toolbarActions`（主 → 次）或 `toolbarRightActions`（危险）；`StatisticsListPage` 用 `toolbarLeftExtra` / `toolbarRightExtra`。标题区空间窄、与页面级操作语义混淆，窄屏下会挤压标题（详见「列表页按钮布局纪律」一节） |
 
 ***
 
@@ -1155,6 +1251,7 @@ node ai-lint.mjs src/
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.8.0 | 2026-11-06 | 新增「包版本自检」（§〇，与 Skill 版本自检同批执行：比对项目声明 / 实际安装 / registry latest，落后或网络失败均静默不阻塞）；新增「列表页按钮布局纪律」：`titleActions` 只放帮助入口（「快速上手」），明确禁止放新增/导出/批量删除等业务按钮；业务按钮统一进 `toolbarActions`（主 → 次）与 `toolbarRightActions`（危险），同容器 8px 间距；`StatisticsListPage` 因无工具栏 props，业务按钮改走 `toolbarLeftExtra` / `toolbarRightExtra`；反模式 26→27 条 |
 | 1.7.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.47`（`CompanyChart` 图表组件族自 1.2.47 起提供）；基础组件清单 72→80，新增「图表 Charts」分组（`CompanyChart` + 7 个预设 Line/Area/Bar/GroupedBar/StackedBar/Pie/Donut，基于 AntV G2 5.x，内置品牌色板，禁止硬编码图表配色、预设优先） |
 | 1.6.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.45`（补 `DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供）；GitHub 源仓库补齐本地 1.3.0~1.5.0 演进（12 业务模板 / AiActionGuard 章节 / 反模式 17→26 条 / Token 色板对齐 antd 语义色）；FormPageTemplate 示例沿用 `FormValues` + AiFormChangeMeta 对齐版；AiActionGuard 示例补宿主回调 `checkPermission`/`onAudit` 定义（verify 关卡拦截） |
 | 1.5.0 | 2026-11-02 | 新增 `AiActionGuard`（AI 动作执行闸门：allow/confirm/deny 默认策略、实时权限、写类幂等、固定字段审计）；业务模板表 11→12；反模式 23→26 条（AI 动作直连接口 / 权限结果缓存复用 / 未知动作默认放行）；新增「AI 动作执行闸门」小节 |
