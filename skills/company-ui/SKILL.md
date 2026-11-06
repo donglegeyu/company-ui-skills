@@ -4,7 +4,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.8.0
+     version: 1.9.0
      updated: 2026-11-06
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
@@ -12,7 +12,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.8.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.9.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -73,7 +73,7 @@ npm i @donglegeyu/company-ui@latest
 
 ***
 
-## 一、七条红线（违反即不合格）
+## 一、八条红线（违反即不合格）
 
 ### 1. 禁止使用 antd 原生组件
 
@@ -184,6 +184,158 @@ import { SettingOutlined } from '@ant-design/icons';
 
 **常用业务图标键**：`home` `setting` `commodity` `buy` `order` `file-cabinet` `box` `wallet` `table` `comments` `people-top-card` `tag` `category-management` `all-application` `folder-open`。
 `iconNode` 仅在内置图标集**确实没有**所需图标时使用（传了即优先生效、不再使用内置图标集）。传入未注册的 `icon` 键时开发环境会控制台警告并自动回退，不会静默空白。
+
+### 8. 模板组件配套 UI 必须照抄官方示例，禁止自创
+
+使用模板组件（`StatisticsListPage` / `SmartListTemplate` 等）的扩展点（`titleExtra` / `titleActions` / `actionColumn` / `toolbarRightExtra` 等）时：
+
+1. **必须先查 `docs/` 下对应组件文档的「代码演示」**，原样复用示例中的组件组合（`docs/template-components/*.md` 优先，其次 `docs/antd-components/**`）。
+2. **禁止**用 antd 原生组件（`DatePicker` / `Button` / `Dropdown`）或手写 DOM 结构替代官方示例形态——会丢主题 Token、丢 `slp-*` 样式联动与交互细节。
+3. 必查的两个典型组合：
+   - **月份选择器**：`CompanyDropdown` 包裹 + `<CompanyButton type="text" className="slp-month-trigger">` + `<CompanyDatePicker picker="month" />`（见 `docs/template-components/statistics-list-page.md` 的「统计卡片 + 月份选择器」演示）。`slp-month-trigger` 是组件内置样式钩子，负责按钮高度/内边距与面板联动。
+   - **操作列**：必须用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }` + `bodyCell` 渲染），禁止手拼 `<Space>` + 多个 `CompanyButton`。
+4. 文档里没有现成示例时，先找**最接近的同类示例**照抄结构，再替换字段；不得凭空发明新的 DOM 层级。
+
+```tsx
+// 以下是 dumi 文档 demo 形态的完整示例（业务代码中请改为具名导出，见红线 5）
+import React, { useState } from 'react';
+import { DownOutlined } from '@ant-design/icons';
+import {
+  ActionCell,
+  CompanyButton,
+  CompanyDatePicker,
+  CompanyDropdown,
+  CompanyMessage,
+  StatisticsListPage,
+} from '@donglegeyu/company-ui';
+import type { Dayjs } from 'dayjs';
+import type {
+  PageResponse,
+  StatisticCardConfig,
+  StatisticsColumn,
+  StatisticsFilterField,
+} from '@donglegeyu/company-ui';
+
+type RecordItem = {
+  id: number;
+  code: string;
+};
+
+const fetchData = async (params: Record<string, unknown>): Promise<PageResponse<RecordItem>> => ({
+  list: [{ id: 1, code: 'A001' }],
+  total: 1,
+  pageNum: (params.pageNum as number) || 1,
+  pageSize: (params.pageSize as number) || 10,
+});
+
+const columns: StatisticsColumn<RecordItem>[] = [
+  { key: 'code', label: '编号', visible: true, width: 160 },
+];
+
+const filterFields: StatisticsFilterField[] = [
+  { key: 'code', label: '编号', type: 'input', placeholder: '请输入编号' },
+];
+
+const statisticCards: StatisticCardConfig[] = [{ key: 'total', title: '总数', value: '1' }];
+
+// 月份选择器：照抄官方示例（CompanyDropdown + type="text" 按钮 + slp-month-trigger 类）
+const MonthSelector = () => {
+  const [open, setOpen] = useState(false);
+  const [month, setMonth] = useState('2026 年 4 月');
+
+  const handleChange = (date: Dayjs | null) => {
+    if (!date) return;
+    const label = `${date.year()} 年 ${date.month() + 1} 月`;
+    setMonth(label);
+    setOpen(false);
+    CompanyMessage.info(`已切换到 ${label}`);
+  };
+
+  return (
+    <CompanyDropdown
+      open={open}
+      onOpenChange={setOpen}
+      trigger={['click']}
+      popupRender={() => (
+        <div className="slp-month-panel" onClick={(e) => e.stopPropagation()}>
+          <CompanyDatePicker
+            picker="month"
+            open={open}
+            onChange={handleChange}
+            onOpenChange={(o) => {
+              if (!o) setOpen(false);
+            }}
+            inputReadOnly
+          />
+        </div>
+      )}
+    >
+      <CompanyButton type="text" className="slp-month-trigger" onClick={() => setOpen(!open)}>
+        <span style={{ marginRight: 4 }}>{month}</span>
+        <DownOutlined
+          style={{
+            fontSize: 12,
+            transition: 'transform 0.2s',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
+      </CompanyButton>
+    </CompanyDropdown>
+  );
+};
+
+export default function CheckListPage() {
+  return (
+    <div style={{ height: 560 }}>
+      <StatisticsListPage<RecordItem>
+        title="安检结果查询"
+        titleExtra={<MonthSelector />}
+        statisticCards={statisticCards}
+        filterFields={filterFields}
+        columns={columns}
+        // 操作列必须用 ActionCell，禁止手拼按钮
+        actionColumn={{
+          title: '操作',
+          width: 180,
+          render: (record) => (
+            <ActionCell
+              buttons={[
+                {
+                  key: 'detail',
+                  label: '详情',
+                  onClick: () => CompanyMessage.info(`详情 ${record.code}`),
+                },
+                {
+                  key: 'delete',
+                  label: '删除',
+                  confirm: true,
+                  confirmTitle: `确定删除 ${record.code} 吗？`,
+                  onClick: () => CompanyMessage.warning(`已删除 ${record.code}`),
+                },
+              ]}
+            />
+          ),
+        }}
+        fetchData={fetchData}
+        defaultPageSize={10}
+      />
+    </div>
+  );
+}
+```
+
+反例（自创结构，禁止）：
+
+```text
+// ❌ 裸 DatePicker + 普通按钮，绕开官方示例
+<CompanyDatePicker picker="month" open={open} onChange={handleChange} />
+<CompanyButton onClick={() => setOpen(!open)}>2026 年 4 月</CompanyButton>
+
+为什么不行：
+1. 少了 CompanyDropdown 包裹 → 面板不跟随触发器定位，点外部不关闭
+2. 按钮缺 type="text" + slp-month-trigger → 拿不到 StatisticsListPage 内置的 .slp-month-trigger 样式（高度、内边距、图标旋转联动全部失效）
+3. 裸 DatePicker 常驻渲染会撑高标题区，与官方示例的弹层形态不一致
+```
 
 ***
 
@@ -1057,7 +1209,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 
 ***
 
-## 六、高频反模式（AI 最容易犯的 27 个错）
+## 六、高频反模式（AI 最容易犯的 28 个错）
 
 ### 组件已自带能力（AI 勿手加）——先看这张表再写任何装饰
 
@@ -1104,6 +1256,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 25 | 权限结果缓存复用：`checkPermission` 只调一次、结果存 state 或跨动作复用 | 每次 `run` / `canRun` 都实时调用 `checkPermission`，组件不缓存任何权限结果 |
 | 26 | 未知动作默认放行：策略表里没登记就直接执行 | 白名单 + 默认拒绝：未知动作一律返回 `{ ok: false, reason: 'denied' }` |
 | 27 | 把新增/导出/批量删除等业务按钮塞进 `titleActions`（列表页标题区） | **标题区只放帮助入口**（「快速上手」）；业务按钮进 `toolbarActions`（主 → 次）或 `toolbarRightActions`（危险）；`StatisticsListPage` 用 `toolbarLeftExtra` / `toolbarRightExtra`。标题区空间窄、与页面级操作语义混淆，窄屏下会挤压标题（详见「列表页按钮布局纪律」一节） |
+| 28 | 模板扩展点自创结构 / 用 antd 原生组件替代官方示例（如月份选择器裸用 `DatePicker`、操作列手拼按钮） | 先查 `docs/` 对应组件文档的「代码演示」并原样复用：月份选择器 = `CompanyDropdown` + `type="text"` 按钮 + `slp-month-trigger` 类；操作列 = `ActionCell`。自创结构会丢 `slp-*` 样式联动、主题 Token 与弹层定位（详见红线 8） |
 
 ***
 
@@ -1209,7 +1362,7 @@ import { Space, Tag, Form, Row, Col, theme } from 'antd';
 
 ## 九、生成后自动校验（治理闭环环节③）
 
-生成代码不是终点，**校验通过才是**。七条红线与数据契约已做成可执行检查（`ai-lint.mjs`，零依赖纯 Node），生成后必须运行并修复至 0 error：
+生成代码不是终点，**校验通过才是**。八条红线与数据契约已做成可执行检查（`ai-lint.mjs`，零依赖纯 Node），生成后必须运行并修复至 0 error：
 
 ```bash
 curl -O https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/scripts/ai-lint.mjs
@@ -1243,7 +1396,7 @@ node ai-lint.mjs src/
 | `smart-list-template-builder` | 智能列表页还原 | 1:1 还原标准列表页 |
 | `dumi-theme-customizer` | Dumi 主题定制 | 修改文档站点样式 |
 
-本 Skill 是其他三个 Skill 的规则基础——`pc-prototype-builder` 和 `smart-list-template-builder` 的代码生成规则均源自本 Skill 的七条红线和组件清单。
+本 Skill 是其他三个 Skill 的规则基础——`pc-prototype-builder` 和 `smart-list-template-builder` 的代码生成规则均源自本 Skill 的八条红线和组件清单。
 
 ***
 
@@ -1251,6 +1404,7 @@ node ai-lint.mjs src/
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.9.0 | 2026-11-06 | 新增第八条红线「模板组件配套 UI 必须照抄官方示例，禁止自创」：模板扩展点（`titleExtra` / `titleActions` / `actionColumn` / `toolbarRightExtra`）必须先查 `docs/` 的「代码演示」并原样复用；月份选择器 = `CompanyDropdown` + `type="text"` + `slp-month-trigger`，操作列 = `ActionCell`；附可执行正例与 `text` 反例；反模式 27→28 条 |
 | 1.8.0 | 2026-11-06 | 新增「包版本自检」（§〇，与 Skill 版本自检同批执行：比对项目声明 / 实际安装 / registry latest，落后或网络失败均静默不阻塞）；新增「列表页按钮布局纪律」：`titleActions` 只放帮助入口（「快速上手」），明确禁止放新增/导出/批量删除等业务按钮；业务按钮统一进 `toolbarActions`（主 → 次）与 `toolbarRightActions`（危险），同容器 8px 间距；`StatisticsListPage` 因无工具栏 props，业务按钮改走 `toolbarLeftExtra` / `toolbarRightExtra`；反模式 26→27 条 |
 | 1.7.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.47`（`CompanyChart` 图表组件族自 1.2.47 起提供）；基础组件清单 72→80，新增「图表 Charts」分组（`CompanyChart` + 7 个预设 Line/Area/Bar/GroupedBar/StackedBar/Pie/Donut，基于 AntV G2 5.x，内置品牌色板，禁止硬编码图表配色、预设优先） |
 | 1.6.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.45`（补 `DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供）；GitHub 源仓库补齐本地 1.3.0~1.5.0 演进（12 业务模板 / AiActionGuard 章节 / 反模式 17→26 条 / Token 色板对齐 antd 语义色）；FormPageTemplate 示例沿用 `FormValues` + AiFormChangeMeta 对齐版；AiActionGuard 示例补宿主回调 `checkPermission`/`onAudit` 定义（verify 关卡拦截） |
