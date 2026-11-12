@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.9.0
-     updated: 2026-11-06
+     version: 1.10.0
+     updated: 2026-11-12
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.9.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.10.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -508,7 +508,7 @@ root.render(
 | 色阶 | `ColorScale` | 颜色渐变选择器 |
 | 省略文本 | `EllipsisText` | 文本溢出 + Tooltip |
 | 底部操作栏 | `FormFooterActions` | 表单底部固定操作栏 |
-| 视图保存抽屉 | `FilterOptionsDrawer` | 筛选视图保存 |
+| 视图切换器 | `ViewSwitcher` | 列表视图切换/保存/另存为（内置保存抽屉，SmartListTemplate、StatisticsListPage 内置） |
 | 页面标题 | `PageTitle` | 标准页头 |
 | 分组标题 | `SectionTitle` | 区块分隔标题 |
 | 无障碍检查 | `AccessibilityChecker` | 无障碍审计 |
@@ -524,7 +524,7 @@ root.render(
 |---|---|---|
 | 布局模板 | `AdminLayoutTemplate` | ⭐ 后台骨架一步到位（侧边栏+页签+内容区，页签/高亮/间距全托管） |
 | 智能列表模板 | `SmartListTemplate` | 筛选+表格+分页+列设置+视图切换 |
-| 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格 |
+| 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格（传 `viewEndpoint` 时可挂载视图切换） |
 | 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏（独立页） |
 | 抽屉表单 | `DrawerFormTemplate` | 抽屉承载新增/编辑，内置 footer 与关闭拦截（440px，遮罩禁关） |
 | 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，顶部固定+内容区滚动+多 Tab（640px，遮罩可关） |
@@ -683,7 +683,7 @@ interface FieldDefinition {
 三条规则：
 1. **禁止自创内容**：像「共 X 条 / 启用 X / 禁用 X」这类统计标签是**自定义 titleExtra，非模板内置**——用户需求里没提计数就完全不传 titleExtra（默认：不传）
 2. 工具栏/操作区按钮一律 `CompanyButton` + **文字标签**（「新增」「导出」），与官方 demo 一致；**禁止**图标按钮、禁止在按钮组外加 Divider/自定义间距
-3. 行内操作用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }`）配 `bodyCell` 渲染——禁止每行手拼 `<Space>` + CompanyButton。**删除按钮标准：`confirm: true, confirmTitle` 二次确认，不用 `danger`**（全库统一）
+3. 行内操作用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }`）配 `bodyCell` 渲染——禁止每行手拼 `<Space>` + CompanyButton。**删除按钮标准：`confirm: true, confirmTitle` 二次确认；配色默认主色（`type="primary"` 或默认按钮样式），不得默认用 `danger` 危险色**（全库统一；确需红色先向用户确认）
 
 #### 列表页按钮布局纪律（titleActions 只放帮助入口）
 
@@ -694,6 +694,9 @@ interface FieldDefinition {
 3. **排列顺序统一为「主操作 → 次级操作 → 危险操作」**（如「新增」→「导出」→「批量删除」），同一容器内用 `<CompanySpace size={8}>` 保持 8px 间距与分组，危险操作放最右。
 4. **需要往页面右侧加按钮时，优先复用页面标题区插槽**（`SmartListTemplate` 用 `titleActions` / `titleExtra`；`StatisticsListPage` 用 `titleActions` / `titleExtra`），不要默认新开一条工具栏。标题区承载页面级入口：帮助入口文案用「快速上手」，提示文案「请查看 系统使用指南」，不承载业务动作。
 5. **`StatisticsListPage` 的工具栏限制**：它没有 `toolbarActions` / `toolbarRightActions`，工具栏自定义槽是 `toolbarLeftExtra`（搜索框右侧）与 `toolbarRightExtra`（列设置左侧）——业务按钮（新增/导出/批量）进这两个槽；其 `titleActions` 仍只放帮助入口。
+6. **删除按钮默认用主色**（`type="primary"` 或默认按钮样式），**不得默认使用 `danger` 危险色**；同一容器已有主色「新增」时，删除用默认或 `type="text"` 按钮，避免两个主色按钮并排抢焦点。二次确认弹层主操作、不可恢复的批量删除等确需红色的场景，**先与用户确认**后再用。
+
+> **自动校验闸门**：`scripts/verify-no-danger-delete.mjs` 会扫描本 Skill 示例、`docs/` 代码演示以及传入的源码目录，「删除类按钮 + `danger`」命中即失败（见「九、生成后自动校验」）——删除配色不再只是文档建议。
 
 ```tsx
 // 以下是 dumi 文档 demo 形态的完整示例（业务代码中请改为具名导出，见红线 5）
@@ -737,8 +740,8 @@ export default function UserListPage() {
           <CompanyButton>导出</CompanyButton>
         </CompanySpace>
       }
-      // 危险操作放右侧工具区（最右）
-      toolbarRightActions={<CompanyButton danger>批量删除</CompanyButton>}
+      // 批量删除放右侧工具区（最右），默认按钮样式，不用 danger
+      toolbarRightActions={<CompanyButton>批量删除</CompanyButton>}
     />
   );
 }
@@ -1015,6 +1018,8 @@ export function CheckDetailPage() {
 | titleActions | ReactNode | 标题栏最右侧独立操作区——**只放帮助入口**（「快速上手」），禁放业务按钮 |
 | toolbarLeftExtra | ReactNode | 工具栏左侧自定义区（搜索框右侧）——新增/导出等业务按钮放这里 |
 | toolbarRightExtra | ReactNode | 工具栏右侧自定义区（列设置左侧）——次要/危险按钮放这里 |
+| viewEndpoint | string | 视图配置接口地址；传入后页面标题右侧（带分割线）显示视图切换器（与 `SmartListTemplate` 一致，含默认视图/已修改/保存/另存为） |
+| onViewChange | ({ schemeId, filters }) => void | 视图切换回调，返回视图 id 与条件；组件会按条件重建筛选标签并重新请求数据 |
 | onRefresh | (filterParams) => void | 传入才显示刷新按钮 |
 | defaultPageSize / rowKey / size / scrollY | — | 表格行为 |
 
@@ -1209,7 +1214,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 
 ***
 
-## 六、高频反模式（AI 最容易犯的 28 个错）
+## 六、高频反模式（AI 最容易犯的 29 个错）
 
 ### 组件已自带能力（AI 勿手加）——先看这张表再写任何装饰
 
@@ -1257,6 +1262,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 26 | 未知动作默认放行：策略表里没登记就直接执行 | 白名单 + 默认拒绝：未知动作一律返回 `{ ok: false, reason: 'denied' }` |
 | 27 | 把新增/导出/批量删除等业务按钮塞进 `titleActions`（列表页标题区） | **标题区只放帮助入口**（「快速上手」）；业务按钮进 `toolbarActions`（主 → 次）或 `toolbarRightActions`（危险）；`StatisticsListPage` 用 `toolbarLeftExtra` / `toolbarRightExtra`。标题区空间窄、与页面级操作语义混淆，窄屏下会挤压标题（详见「列表页按钮布局纪律」一节） |
 | 28 | 模板扩展点自创结构 / 用 antd 原生组件替代官方示例（如月份选择器裸用 `DatePicker`、操作列手拼按钮） | 先查 `docs/` 对应组件文档的「代码演示」并原样复用：月份选择器 = `CompanyDropdown` + `type="text"` 按钮 + `slp-month-trigger` 类；操作列 = `ActionCell`。自创结构会丢 `slp-*` 样式联动、主题 Token 与弹层定位（详见红线 8） |
+| 29 | 删除按钮默认写成 `danger` 危险色（操作列、工具栏批量删除） | 删除默认主色（`type="primary"` 或默认按钮样式），用 `ActionCell` 的 `confirm: true` + `confirmTitle` 做二次确认；同容器已有主色「新增」时，删除用默认或 `type="text"` 按钮；二次确认弹层主操作、不可恢复批量删除等确需红色的场景先与用户确认（详见「列表页按钮布局纪律」第 6 条） |
 
 ***
 
@@ -1385,6 +1391,17 @@ node ai-lint.mjs src/
 
 **工作流：生成 → 校验 → 修复 → 复跑，直至 0 error**。warning 逐条确认，确属例外加豁免注释（行尾 `// lint-ai-disable-line`，文件头 `/* lint-ai-disable 规则名 */`）并注明原因——豁免是例外登记，不是绕过规范。治理闭环完整模型（五环 / 漂移四来源对策 / 主观意见三级分流 / 回写流程）见文档站「治理闭环 Governance」页。
 
+### 删除按钮配色闸门（verify-no-danger-delete）
+
+删除配色有独立闸门（`scripts/verify-no-danger-delete.mjs`，零依赖）。**该检查存在，命中即非零退出**：
+
+```bash
+node scripts/verify-no-danger-delete.mjs        # 默认扫 .trae/skills/**/*.md + docs/**/*.md 的代码块
+node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
+```
+
+判定：`<CompanyButton danger>删除 / 移除 / 清空…</CompanyButton>`、操作项对象 `{ label: '删除', danger: true }`。白名单：`okButtonProps` / `okType="danger"`（二次确认弹层主操作）、Menu / Dropdown 危险菜单项、`danger` 变体 API 演示、`danger?: boolean` 类型声明。
+
 ***
 
 ## 十、与已有 Skill 的关系
@@ -1404,6 +1421,9 @@ node ai-lint.mjs src/
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.10.0 | 2026-11-12 | 组件清单对齐 `@donglegeyu/company-ui@2.0.0` 破坏性变更：共享组件表「视图保存抽屉 `FilterOptionsDrawer`」→「视图切换器 `ViewSwitcher`」（FilterOptionsDrawer 收编为 ViewSwitcher 内置保存抽屉，不再从包根导出）；`StatisticsListPage` 新增 `viewEndpoint` / `onViewChange` Props（传入后标题右侧挂载视图切换器，与 `SmartListTemplate` 口径一致） |
+| 1.9.2 | 2026-11-06 | 新增删除按钮配色自动闸门 `verify-no-danger-delete.mjs`：扫描 Skill 示例 / `docs/` 代码演示 / 业务源码，命中「删除类按钮 + `danger`」即非零退出（白名单：`okButtonProps` / `okType="danger"`、Menu·Dropdown 危险菜单项、`danger` 变体 API 演示、类型声明）；接入 `verify:skill-examples`（`prepublishOnly` 自动继承）；删除配色从文档建议变为可执行拦截 |
+| 1.9.1 | 2026-11-06 | 统一删除按钮配色口径：删除默认主色（`type="primary"` 或默认按钮样式），不得默认使用 `danger` 危险色；同容器已有主色「新增」时删除用默认/`text`；`ActionCell` 删除仍用 `confirm: true + confirmTitle`；确需红色（确认弹层主操作、不可恢复批量删除）先与用户确认；同步修正示例与反模式 28→29 条 |
 | 1.9.0 | 2026-11-06 | 新增第八条红线「模板组件配套 UI 必须照抄官方示例，禁止自创」：模板扩展点（`titleExtra` / `titleActions` / `actionColumn` / `toolbarRightExtra`）必须先查 `docs/` 的「代码演示」并原样复用；月份选择器 = `CompanyDropdown` + `type="text"` + `slp-month-trigger`，操作列 = `ActionCell`；附可执行正例与 `text` 反例；反模式 27→28 条 |
 | 1.8.0 | 2026-11-06 | 新增「包版本自检」（§〇，与 Skill 版本自检同批执行：比对项目声明 / 实际安装 / registry latest，落后或网络失败均静默不阻塞）；新增「列表页按钮布局纪律」：`titleActions` 只放帮助入口（「快速上手」），明确禁止放新增/导出/批量删除等业务按钮；业务按钮统一进 `toolbarActions`（主 → 次）与 `toolbarRightActions`（危险），同容器 8px 间距；`StatisticsListPage` 因无工具栏 props，业务按钮改走 `toolbarLeftExtra` / `toolbarRightExtra`；反模式 26→27 条 |
 | 1.7.0 | 2026-11-04 | 版本基准同步至 `@donglegeyu/company-ui@1.2.47`（`CompanyChart` 图表组件族自 1.2.47 起提供）；基础组件清单 72→80，新增「图表 Charts」分组（`CompanyChart` + 7 个预设 Line/Area/Bar/GroupedBar/StackedBar/Pie/Donut，基于 AntV G2 5.x，内置品牌色板，禁止硬编码图表配色、预设优先） |
