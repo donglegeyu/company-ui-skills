@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.11.0
-     updated: 2026-11-12
+     version: 1.12.0
+     updated: 2026-11-16
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.11.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.12.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -195,7 +195,10 @@ import { SettingOutlined } from '@ant-design/icons';
    - **月份选择器**：`CompanyDropdown` 包裹 + `<CompanyButton type="text" className="slp-month-trigger">` + `<CompanyDatePicker picker="month" />`（见 `docs/template-components/statistics-list-page.md` 的「统计卡片 + 月份选择器」演示）。`slp-month-trigger` 是组件内置样式钩子，负责按钮高度/内边距与面板联动。
    - **操作列**：必须用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }` + `bodyCell` 渲染），禁止手拼 `<Space>` + 多个 `CompanyButton`。
 4. 文档里没有现成示例时，先找**最接近的同类示例**照抄结构，再替换字段；不得凭空发明新的 DOM 层级。
-5. **用户用 `demo-xxx` slug 指代某个 demo 效果时**：在 `docs/template-components/*.md` 中 grep `{#demo-xxx}` 定位对应组件文档的「代码演示」小节（demo 标题形如 `### 标题 {#demo-xxx}`，slug 为 `demo-` 前缀 + 英文 kebab-case，同组件内唯一），**原样复用**该实现；文档站上每个 demo 标题旁的品牌色 chip 点击即复制 slug 本体。
+5. **用户用 `demo-xxx` slug 指代某个 demo 效果时**：在 `docs/template-components/*.md` 中 grep `{#demo-xxx}` 定位对应组件文档的「代码演示」小节（demo 标题形如 `### 标题 {#demo-xxx}`），**原样复用**该实现；文档站上每个 demo 标题旁的品牌色 chip 点击即复制 slug 本体。
+   - **能力型 demo slug 必须全局唯一**：格式 `demo-<组件kebab名>-<能力>`（组件 kebab 名 = 文档文件名去 `.md`，如 `smart-list-template`），首个 demo 统一命名 `demo-<组件kebab名>-basic`（如 `demo-smart-list-template-basic`），禁止裸用 `demo-basic`。
+   - **API/类型章节锚点**沿用 `demo-<类型名kebab>`（类型名全局唯一，如 `demo-view-switcher-props`）。
+   - **下指令示例**：给 AI 写「参考 statistics-list-page 的 demo-statistics-list-page-view-switch」即可唯一定位该 demo。
 
 ```tsx
 // 以下是 dumi 文档 demo 形态的完整示例（业务代码中请改为具名导出，见红线 5）
@@ -528,7 +531,7 @@ root.render(
 | 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格（传 `viewEndpoint` 时可挂载视图切换） |
 | 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏（独立页） |
 | 抽屉表单 | `DrawerFormTemplate` | 抽屉承载新增/编辑，内置 footer 与关闭拦截（440px，遮罩禁关） |
-| 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，顶部固定+内容区滚动+多 Tab（640px，遮罩可关） |
+| 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，结构化头部（name/tags/titleActions/fields）+内容区滚动+多 Tab（440px，遮罩可关，禁用 bordered 描述表格） |
 | 详情页模板 | `DetailPageTemplate` | 信息卡片+标签+多 Tab |
 | 侧边导航 | `CompanySidebar` | 左侧双层导航 |
 | 多页签栏 | `CompanyMultiTabs` | 浏览器式页签栏 |
@@ -857,7 +860,7 @@ export function ProductCreatePage() {
 | 新增表单 | 抽屉 | `DrawerFormTemplate`（底层 `CompanyDrawer` + `BaseInfoForm`） |
 | 编辑、字段少 | 抽屉 | `DrawerFormTemplate` |
 | 编辑、字段多 / 多 Tab / 含子表 | 独立表单页 | `FormPageTemplate` |
-| 只读查看 | 抽屉 | `DrawerDetailTemplate`（640，遮罩可关，顶部固定+内容区滚动） |
+| 只读查看 | 抽屉 | `DrawerDetailTemplate`（440，遮罩可关，结构化头部+内容区滚动，字段用「label：value 纯文字行」） |
 | 二次确认（删除/批量操作） | 弹窗 | `CompanyModal` |
 
 硬性规则：
@@ -867,7 +870,8 @@ export function ProductCreatePage() {
 - **Drawer 需自建 footer**：直接用本模板，`DrawerFormTemplate` 已内置「取消 + 保存」；禁止各业务页重复手写 footer。
 - **`maskClosable={false}`**：表单类抽屉默认禁止点遮罩关闭（`DrawerFormTemplate` 默认 false），避免填写中途误触丢数据；只有纯确认类 `CompanyModal` 才允许点遮罩关闭。
 - **保存中拦截关闭**：`submitLoading` 为 true 时关闭图标/取消/遮罩全部拦截，避免请求未完成丢失状态。
-- **宽度约定**：表单抽屉默认 440px；详情抽屉 `DrawerDetailTemplate` 默认 640px；两档之外（大量字段 / 多 Tab / 子表的复杂编辑）转独立表单页 `FormPageTemplate`。
+- **宽度约定**：表单抽屉与详情抽屉统一 440px（对齐「线索推送配置详情」设计稿）；大量字段 / 多 Tab / 子表的复杂编辑转独立表单页 `FormPageTemplate`。
+- **只读详情禁用描述表格**：详情字段统一「label：value 纯文字行」（头部用 `fields` prop，内容区用 label 45% 灰 + value 88% 黑文字行），禁止 `CompanyDescriptions bordered`——440px 窄抽屉下表格列宽被挤压会崩坏。
 - **关闭后刷新列表**：保存成功后关闭抽屉并重新拉取/刷新列表数据。
 - **禁止把 `FormPageTemplate` 塞进 Drawer**：其源码为 `position: absolute; inset: 0`，在抽屉内会定位失效。
 
@@ -1256,7 +1260,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 19 | 同一列表新增用 Drawer、编辑用 Modal（或反之） | **同一列表的新增/编辑形态必须一致** |
 | 20 | 把 `FormPageTemplate` 放进 Drawer | `FormPageTemplate` 是 `position: absolute; inset: 0` 的页面骨架，只能作为独立页；抽屉用 `DrawerFormTemplate` |
 | 21 | 每个业务页手写 Drawer footer（取消/保存/loading/拦截关闭） | 统一用 `DrawerFormTemplate`，footer、`maskClosable={false}`、保存中拦截关闭均已内置 |
-| 22 | 用表单抽屉 `DrawerFormTemplate` 做只读详情 | 只读详情用 `DrawerDetailTemplate`（640px、遮罩可关、顶部区固定）；表单抽屉 `maskClosable=false` + footer 操作栏的约定与只读场景相悖 |
+| 22 | 用表单抽屉 `DrawerFormTemplate` 做只读详情 | 只读详情用 `DrawerDetailTemplate`（440px、遮罩可关、结构化头部）；表单抽屉 `maskClosable=false` + footer 操作栏的约定与只读场景相悖 |
 | 23 | 手拼 `CompanyDrawer` + children 描述列表当详情抽屉 | 统一用 `DrawerDetailTemplate`：顶部固定/内容区滚动/Tab 切换/宽度口径均已内置，禁止各页重复实现滚动结构 |
 | 24 | AI 动作直连接口：把模型返回的 action 直接 `fetch` / 调用业务 API | 所有 AI 发起的动作必须经 `AiActionGuard` 的 `run` 走策略/确认/实时权限/幂等/审计，禁止绕过闸门 |
 | 25 | 权限结果缓存复用：`checkPermission` 只调一次、结果存 state 或跨动作复用 | 每次 `run` / `canRun` 都实时调用 `checkPermission`，组件不缓存任何权限结果 |
@@ -1422,6 +1426,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.0 | 2026-11-16 | `DrawerDetailTemplate` 按「线索推送配置详情」设计稿重构：新增结构化头部 Props（`name` / `tags` / `titleActions` / `fields`），默认宽度 640→440（表单/详情抽屉统一 440），禁用 bordered 描述表格（窄抽屉崩坏），字段统一「label：value 纯文字行」 |
 | 1.11.0 | 2026-11-12 | 红线 8 新增第 5 条：用户报 `demo-xxx` slug 时，到 `docs/template-components/*.md` grep `{#demo-xxx}` 定位对应「代码演示」并原样复用实现（slug = `demo-` 前缀 + 英文 kebab-case，同组件内唯一）；配套 6 个业务模板文档全部 demo 标题注入 `{#demo-xxx}` 稳定锚点（remark 插件 + 文档站 demo 标题旁可点击复制 chip），锚点/TOC/滚动高亮零回归 |
 | 1.10.0 | 2026-11-12 | 组件清单对齐 `@donglegeyu/company-ui@2.0.0` 破坏性变更：共享组件表「视图保存抽屉 `FilterOptionsDrawer`」→「视图切换器 `ViewSwitcher`」（FilterOptionsDrawer 收编为 ViewSwitcher 内置保存抽屉，不再从包根导出）；`StatisticsListPage` 新增 `viewEndpoint` / `onViewChange` Props（传入后标题右侧挂载视图切换器，与 `SmartListTemplate` 口径一致） |
 | 1.9.2 | 2026-11-06 | 新增删除按钮配色自动闸门 `verify-no-danger-delete.mjs`：扫描 Skill 示例 / `docs/` 代码演示 / 业务源码，命中「删除类按钮 + `danger`」即非零退出（白名单：`okButtonProps` / `okType="danger"`、Menu·Dropdown 危险菜单项、`danger` 变体 API 演示、类型声明）；接入 `verify:skill-examples`（`prepublishOnly` 自动继承）；删除配色从文档建议变为可执行拦截 |
