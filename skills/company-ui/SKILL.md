@@ -4,7 +4,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.10.0
+     version: 1.11.0
      updated: 2026-11-12
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
@@ -12,7 +12,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.10.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.11.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -195,6 +195,7 @@ import { SettingOutlined } from '@ant-design/icons';
    - **月份选择器**：`CompanyDropdown` 包裹 + `<CompanyButton type="text" className="slp-month-trigger">` + `<CompanyDatePicker picker="month" />`（见 `docs/template-components/statistics-list-page.md` 的「统计卡片 + 月份选择器」演示）。`slp-month-trigger` 是组件内置样式钩子，负责按钮高度/内边距与面板联动。
    - **操作列**：必须用 `ActionCell`（`{ key, label, onClick, danger?, confirm? }` + `bodyCell` 渲染），禁止手拼 `<Space>` + 多个 `CompanyButton`。
 4. 文档里没有现成示例时，先找**最接近的同类示例**照抄结构，再替换字段；不得凭空发明新的 DOM 层级。
+5. **用户用 `demo-xxx` slug 指代某个 demo 效果时**：在 `docs/template-components/*.md` 中 grep `{#demo-xxx}` 定位对应组件文档的「代码演示」小节（demo 标题形如 `### 标题 {#demo-xxx}`，slug 为 `demo-` 前缀 + 英文 kebab-case，同组件内唯一），**原样复用**该实现；文档站上每个 demo 标题旁的品牌色 chip 点击即复制 slug 本体。
 
 ```tsx
 // 以下是 dumi 文档 demo 形态的完整示例（业务代码中请改为具名导出，见红线 5）
@@ -1421,6 +1422,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.11.0 | 2026-11-12 | 红线 8 新增第 5 条：用户报 `demo-xxx` slug 时，到 `docs/template-components/*.md` grep `{#demo-xxx}` 定位对应「代码演示」并原样复用实现（slug = `demo-` 前缀 + 英文 kebab-case，同组件内唯一）；配套 6 个业务模板文档全部 demo 标题注入 `{#demo-xxx}` 稳定锚点（remark 插件 + 文档站 demo 标题旁可点击复制 chip），锚点/TOC/滚动高亮零回归 |
 | 1.10.0 | 2026-11-12 | 组件清单对齐 `@donglegeyu/company-ui@2.0.0` 破坏性变更：共享组件表「视图保存抽屉 `FilterOptionsDrawer`」→「视图切换器 `ViewSwitcher`」（FilterOptionsDrawer 收编为 ViewSwitcher 内置保存抽屉，不再从包根导出）；`StatisticsListPage` 新增 `viewEndpoint` / `onViewChange` Props（传入后标题右侧挂载视图切换器，与 `SmartListTemplate` 口径一致） |
 | 1.9.2 | 2026-11-06 | 新增删除按钮配色自动闸门 `verify-no-danger-delete.mjs`：扫描 Skill 示例 / `docs/` 代码演示 / 业务源码，命中「删除类按钮 + `danger`」即非零退出（白名单：`okButtonProps` / `okType="danger"`、Menu·Dropdown 危险菜单项、`danger` 变体 API 演示、类型声明）；接入 `verify:skill-examples`（`prepublishOnly` 自动继承）；删除配色从文档建议变为可执行拦截 |
 | 1.9.1 | 2026-11-06 | 统一删除按钮配色口径：删除默认主色（`type="primary"` 或默认按钮样式），不得默认使用 `danger` 危险色；同容器已有主色「新增」时删除用默认/`text`；`ActionCell` 删除仍用 `confirm: true + confirmTitle`；确需红色（确认弹层主操作、不可恢复批量删除）先与用户确认；同步修正示例与反模式 28→29 条 |
