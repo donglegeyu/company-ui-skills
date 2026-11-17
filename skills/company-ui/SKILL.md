@@ -4,8 +4,8 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.12.0
-     updated: 2026-11-16
+     version: 1.12.1
+     updated: 2026-11-17
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
@@ -1160,7 +1160,7 @@ export function AdminPage() {
 |---|---|
 | 系统导航（13） | `home` `setting` `logout` `favorites` `star` `star-fill` `pin` `pushpin` `bookmark` `tag` `config` `tool` `radar` |
 | 业务通用（18） | `people-top-card` `doc-search` `order` `shopping-cart-del` `buy` `commodity` `file-cabinet` `message-security` `comments` `table` `box` `database-config` `wallet` `scan-setting` `category-management` `user-positioning` `all-application` `folder-open` |
-| 操作交互（17） | `search` `edit` `writing-fluently` `more-one` `more` `more-three` `check-one` `close` `add-one` `minus-one` `delete-two` `save` `preview-open` `preview-close-one` `copy` `zoom-in` `zoom-out` |
+| 操作交互（17） | `search` `edit` `writing-fluently` `more-one` `more` `more-three` `check-one` `close` `add-one` `minus-one` `delete-four` `save` `preview-open` `preview-close-one` `copy` `zoom-in` `zoom-out` |
 | 布局排版（8） | `drag` `density` `more-app` `hamburger-button` `waterfalls-h` `list` `pic` `equalizer` |
 | 箭头方向（5） | `down` `up` `left` `right` `refresh` |
 
@@ -1426,6 +1426,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.1 | 2026-11-17 | 图标系统二次迭代：精选图标名修正（`delete-two` → `delete-four`），生成产物改紧凑单行格式（all-icons.tsx 24007 行体积优化），文档站 For Agents 页「当前 Skill 版本」残留 1.9.2 修正为实时一致 |
 | 1.12.0 | 2026-11-16 | `DrawerDetailTemplate` 按「线索推送配置详情」设计稿重构：新增结构化头部 Props（`name` / `tags` / `titleActions` / `fields`），默认宽度 640→440（表单/详情抽屉统一 440），禁用 bordered 描述表格（窄抽屉崩坏），字段统一「label：value 纯文字行」 |
 | 1.11.0 | 2026-11-12 | 红线 8 新增第 5 条：用户报 `demo-xxx` slug 时，到 `docs/template-components/*.md` grep `{#demo-xxx}` 定位对应「代码演示」并原样复用实现（slug = `demo-` 前缀 + 英文 kebab-case，同组件内唯一）；配套 6 个业务模板文档全部 demo 标题注入 `{#demo-xxx}` 稳定锚点（remark 插件 + 文档站 demo 标题旁可点击复制 chip），锚点/TOC/滚动高亮零回归 |
 | 1.10.0 | 2026-11-12 | 组件清单对齐 `@donglegeyu/company-ui@2.0.0` 破坏性变更：共享组件表「视图保存抽屉 `FilterOptionsDrawer`」→「视图切换器 `ViewSwitcher`」（FilterOptionsDrawer 收编为 ViewSwitcher 内置保存抽屉，不再从包根导出）；`StatisticsListPage` 新增 `viewEndpoint` / `onViewChange` Props（传入后标题右侧挂载视图切换器，与 `SmartListTemplate` 口径一致） |
