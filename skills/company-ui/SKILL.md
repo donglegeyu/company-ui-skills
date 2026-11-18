@@ -4,7 +4,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.12.3
+     version: 1.12.4
      updated: 2026-11-18
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
@@ -12,7 +12,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.12.3`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.12.4`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -1221,7 +1221,7 @@ export function AdminPage() {
 
 | Prop | 类型 | 说明 |
 |---|---|---|
-| `businessMenus` | `SidebarMenuItem[]` | ⚠️ **唯一类型必填**。业务菜单全集（驱动「更多应用」抽屉 + 二级菜单） |
+| `businessMenus` | `SidebarMenuItem[]` | ⚠️ **唯一类型必填**。业务菜单全集（驱动「更多应用」抽屉 + 二级菜单）；二级栏内容由组件按当前/悬浮的一级菜单自动派生，**无需也不存在 `secondMenus` prop** |
 | `brandName` | `string` | 建议必传：品牌名称（无 Logo 时显示首字母），如 `"物资管理系统"` |
 | `domains` | `SidebarDomain[]` | 建议必传：业务域下拉数据（缺了下拉空白） |
 | `userInfo` | `SidebarUserInfo` | 建议必传：左下角用户信息卡 |
@@ -1240,6 +1240,8 @@ export function AdminPage() {
 | `systemBottomMenus` | `SidebarMenuItem[]` | 超级搜索 | 一级图标栏底部固定菜单（默认 `{ key: 'super-search', label: '超级搜索', icon: 'search' }`，即 demo 同款；勿自创「系统设置」等项） |
 | `visibleMenuCount` | `number` | `6` | 一级业务导航最多可见数量，超出自动收进「更多应用」抽屉 |
 | `customNavMenus` | `SidebarMenuItem[]` | 取 `businessMenus` 前 `visibleMenuCount` 项 | 受控快捷导航（需持久化用户自定义排序时才传，配套 `onCustomNavUpdate`） |
+| `bottomExtra` | `ReactNode` | - | 一级侧栏底部插槽（系统菜单之下、个人信息之上），放版本号/帮助入口等自定义内容 |
+| `onDomainPopoverOpenChange` | `(open: boolean) => void` | - | 业务空间弹层展开/收起回调（打开时才拉取最新空间列表） |
 | `homeTab` / `homeContent` | `MultiTabHomeConfig` / `ReactNode` | - | 首页页签配置与首页内容（**建议成对传**，无默认值，漏传点「首页」无落地页签） |
 
 > ⚠️ 生成的页面导航结构与官方 demo 不一致时，**优先排查**：`homeTab`/`homeContent` 是否漏传、`businessMenus[].icon` 是否传了编造的名字、是否多余传了自创的 `firstMenus`/`systemBottomMenus`——典型现象：业务菜单超过 6 个时多出的菜单默认收进「更多应用」抽屉；没传 `homeTab`/`homeContent` 时一级栏「首页」图标点不出内容。
@@ -1474,6 +1476,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.4 | 2026-11-18 | `CompanySidebar` 侧边栏升级：移除 `secondMenus` prop（二级栏内容由组件按当前/悬浮一级菜单自动派生 + hover 预切换，业务 store 不被 hover 污染）；新增 `bottomExtra` 底部插槽与 `onDomainPopoverOpenChange` 业务空间弹层回调；AdminLayoutTemplate 速查章节同步（含「无需也不存在 secondMenus prop」防旧示例残留提示） |
 | 1.12.3 | 2026-11-18 | `TreeTableTemplate` 左树交互增强：节点 hover 操作从三按钮改「更多」下拉菜单（新增/编辑/删除）；新增 `onTreeAdd` / `treeAddText`（底部新增按钮，树超一屏时 sticky 吸底）；For Agents 页「当前 Skill 版本」残留 1.12.1 修正为实时一致 |
 | 1.12.2 | 2026-11-18 | 详情承载形态按复杂度分流：选型表「只读查看」拆为两行（字段少 / 单 Tab → 抽屉 `DrawerDetailTemplate`；多 Tab / 子表 / 大量字段 → 独立详情页 `DetailPageTemplate`），复杂查看与复杂编辑同样具备整页逃生口，避免多 Tab 详情被塞进 440px 抽屉；内容区页面类型表「抽屉表单」移除「只读查看」（消除与反模式 22 的矛盾），补「详情页（独立页）/ 抽屉详情」两行；修正「Skill 版本」引用行 1.12.0 漏改；补 `TreeTableTemplate` 覆盖（业务模板清单 + 页面类型选型表 + 速查章节，含最小示例） |
 | 1.12.1 | 2026-11-17 | 图标系统二次迭代：精选图标名修正（`delete-two` → `delete-four`），生成产物改紧凑单行格式（all-icons.tsx 24007 行体积优化），文档站 For Agents 页「当前 Skill 版本」残留 1.9.2 修正为实时一致 |
