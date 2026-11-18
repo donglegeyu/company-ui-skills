@@ -528,7 +528,8 @@ root.render(
 |---|---|---|
 | 布局模板 | `AdminLayoutTemplate` | ⭐ 后台骨架一步到位（侧边栏+页签+内容区，页签/高亮/间距全托管） |
 | 智能列表模板 | `SmartListTemplate` | 筛选+表格+分页+列设置+视图切换 |
-| 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格（传 `viewEndpoint` 时可挂载视图切换） |
+| 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格（传 `viewEndpoint` 时可挂载视图切换；`viewSwitcherPortalContainer` 可将切换器 portal 提升到外部标题栏） |
+| 左树右表模板 | `TreeTableTemplate` | ⭐ 左树（搜索/虚拟根/hover 操作/拖拽调宽）+ 右表（完整复用 `StatisticsListPage`，标题栏由模板统一渲染） |
 | 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏（独立页） |
 | 抽屉表单 | `DrawerFormTemplate` | 抽屉承载新增/编辑，内置 footer 与关闭拦截（440px，遮罩禁关） |
 | 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，结构化头部（name/tags/titleActions/fields）+内容区滚动+多 Tab（440px，遮罩可关，禁用 bordered 描述表格） |
@@ -1061,6 +1062,49 @@ export function CheckResultPage() {
 }
 ```
 
+### TreeTableTemplate 速查（左树右表页：组织/分类树过滤列表）
+
+模板提供：左树（内置搜索 + 虚拟根入口 + 节点 hover 增删改操作 + 拖拽调宽）+ 右侧完整统计列表页。**页面标题栏由模板统一渲染**，列表区完整继承 `StatisticsListPageProps`（statisticsCards / filterFields / viewEndpoint / toolbar 插槽等全部可用）。
+
+| Props | 类型 | 说明 |
+|---|---|---|
+| title | ReactNode | **必传**。页面标题（模板统一渲染标题栏） |
+| treeData | TreeTableNode[] | **必传**。左树扁平节点（`parent` 为空表示顶级） |
+| rootNode | { key, label, icon? } | 虚拟根入口（如「全部组织」），不传不渲染 |
+| onTreeSelect | (key) => void | 节点选中回调（含根节点 key）；**切换节点后业务方自行重新 fetchData** |
+| onNodeAdd / onNodeEdit / onNodeDelete | (key) => void | 节点 hover 操作回调，不传则对应按钮不显示 |
+| treeWidth / minTreeWidth / maxTreeWidth | number | 左树宽度拖拽（默认 232 / 200 / 480） |
+| viewEndpoint | string | 传入后标题栏右侧显示视图切换器（与 `StatisticsListPage` 同源） |
+
+最小示例：
+
+```tsx
+import { TreeTableTemplate } from '@donglegeyu/company-ui';
+import type { TreeTableNode, StatisticsColumn, PageResponse } from '@donglegeyu/company-ui';
+
+const treeData: TreeTableNode[] = [
+  { key: 'east', label: '华东燃气公司' },
+  { key: 'hangzhou', label: '杭州分公司', parent: 'east' },
+];
+const columns: StatisticsColumn<Record<string, unknown>>[] = [
+  { key: 'name', label: '员工姓名' },
+];
+
+export function OrgMembersPage() {
+  return (
+    <TreeTableTemplate
+      title="组织与权限"
+      treeData={treeData}
+      rootNode={{ key: 'all', label: '全部组织' }}
+      onTreeSelect={(key) => console.log('选中节点', key)}
+      columns={columns}
+      fetchData={async (): Promise<PageResponse<Record<string, unknown>>> =>
+        ({ list: [], total: 0, pageNum: 1, pageSize: 10 })}
+    />
+  );
+}
+```
+
 ### 页面骨架规则（后台管理系统标准结构）
 
 AI 生成完整后台页面时，**必须使用** **`AdminLayoutTemplate`**——它把「左侧导航 CompanySidebar + 顶部页签 CompanyMultiTabs + 内容区」整条骨架固化成一个组件：页签状态、菜单高亮联动、间距契约全部由组件内部托管。**禁止手动拼装 CompanySidebar + CompanyMultiTabs**（仅当需要完全自定义布局时才作为高级用法）。不允许只生成内容区而遗漏骨架。
@@ -1071,6 +1115,7 @@ AI 生成完整后台页面时，**必须使用** **`AdminLayoutTemplate`**—�
 |---|---|---|
 | 列表页 | `SmartListTemplate` | 用户管理 / 订单列表 / 数据查询 |
 | 统计列表页 | `StatisticsListPage` | 仪表盘 / 运营数据 / 报表 |
+| 左树右表页 | `TreeTableTemplate` | 组织/分类树过滤列表（组织与权限、区域设备） |
 | 表单页（独立页） | `FormPageTemplate` | 字段多 / 多 Tab / 含子表的新建、编辑、配置 |
 | 抽屉表单 | `DrawerFormTemplate` | 轻量新增 / 编辑（字段少） |
 | 详情页（独立页） | `DetailPageTemplate` | 多 Tab / 子表 / 大量字段的详情 |
@@ -1428,7 +1473,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
-| 1.12.2 | 2026-11-18 | 详情承载形态按复杂度分流：选型表「只读查看」拆为两行（字段少 / 单 Tab → 抽屉 `DrawerDetailTemplate`；多 Tab / 子表 / 大量字段 → 独立详情页 `DetailPageTemplate`），复杂查看与复杂编辑同样具备整页逃生口，避免多 Tab 详情被塞进 440px 抽屉；内容区页面类型表「抽屉表单」移除「只读查看」（消除与反模式 22 的矛盾），补「详情页（独立页）/ 抽屉详情」两行；修正「Skill 版本」引用行 1.12.0 漏改 |
+| 1.12.2 | 2026-11-18 | 详情承载形态按复杂度分流：选型表「只读查看」拆为两行（字段少 / 单 Tab → 抽屉 `DrawerDetailTemplate`；多 Tab / 子表 / 大量字段 → 独立详情页 `DetailPageTemplate`），复杂查看与复杂编辑同样具备整页逃生口，避免多 Tab 详情被塞进 440px 抽屉；内容区页面类型表「抽屉表单」移除「只读查看」（消除与反模式 22 的矛盾），补「详情页（独立页）/ 抽屉详情」两行；修正「Skill 版本」引用行 1.12.0 漏改；补 `TreeTableTemplate` 覆盖（业务模板清单 + 页面类型选型表 + 速查章节，含最小示例） |
 | 1.12.1 | 2026-11-17 | 图标系统二次迭代：精选图标名修正（`delete-two` → `delete-four`），生成产物改紧凑单行格式（all-icons.tsx 24007 行体积优化），文档站 For Agents 页「当前 Skill 版本」残留 1.9.2 修正为实时一致 |
 | 1.12.0 | 2026-11-16 | `DrawerDetailTemplate` 按「线索推送配置详情」设计稿重构：新增结构化头部 Props（`name` / `tags` / `titleActions` / `fields`），默认宽度 640→440（表单/详情抽屉统一 440），禁用 bordered 描述表格（窄抽屉崩坏），字段统一「label：value 纯文字行」 |
 | 1.11.0 | 2026-11-12 | 红线 8 新增第 5 条：用户报 `demo-xxx` slug 时，到 `docs/template-components/*.md` grep `{#demo-xxx}` 定位对应「代码演示」并原样复用实现（slug = `demo-` 前缀 + 英文 kebab-case，同组件内唯一）；配套 6 个业务模板文档全部 demo 标题注入 `{#demo-xxx}` 稳定锚点（remark 插件 + 文档站 demo 标题旁可点击复制 chip），锚点/TOC/滚动高亮零回归 |
