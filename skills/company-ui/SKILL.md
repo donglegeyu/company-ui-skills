@@ -4,7 +4,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.12.4
+     version: 1.12.5
      updated: 2026-11-18
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
@@ -12,7 +12,7 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.12.4`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.12.5`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -183,7 +183,7 @@ import { SettingOutlined } from '@ant-design/icons';
 ```
 
 **常用业务图标键**：`home` `setting` `commodity` `buy` `order` `file-cabinet` `box` `wallet` `table` `comments` `people-top-card` `tag` `category-management` `all-application` `folder-open`。
-`iconNode` 仅在内置图标集**确实没有**所需图标时使用（传了即优先生效、不再使用内置图标集）。传入未注册的 `icon` 键时开发环境会控制台警告并自动回退，不会静默空白。
+`iconNode` 仅在内置图标集**确实没有**所需图标时使用（传了即优先生效、不再使用内置图标集）。`icon` 传内置精选集之外的值（如 Sprite symbol id `id-card-v-klbe0a04`，与 `IconSelect` 图标池一致）会**原样透传**，渲染层按 Sprite symbol 渲染（需业务侧已加载对应 sprite，否则空白；开发环境每个未知值只警告一次）。
 
 ### 8. 模板组件配套 UI 必须照抄官方示例，禁止自创
 
@@ -1476,6 +1476,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.5 | 2026-11-18 | `CompanySidebar` 交互与图标体系增强：红线 7 图标行为修正——`icon` 未命中内置精选集时**原样透传按 Sprite symbol 渲染**（不再回退关键词匹配，需业务侧已加载对应 sprite，dev 警告去重）；hover 预切换精准化（relatedTarget 判向：来自二级栏预览/连续滑动保持/移向内容区立即恢复，点击是明确导航意图清 hover 预览）；MoreMenuDrawer 分组标题可点击、搜索面板改点击展开；业务空间切换按域缓存导航状态（`navStateMap` 模式见文档 demo） |
 | 1.12.4 | 2026-11-18 | `CompanySidebar` 侧边栏升级：移除 `secondMenus` prop（二级栏内容由组件按当前/悬浮一级菜单自动派生 + hover 预切换，业务 store 不被 hover 污染）；新增 `bottomExtra` 底部插槽与 `onDomainPopoverOpenChange` 业务空间弹层回调；AdminLayoutTemplate 速查章节同步（含「无需也不存在 secondMenus prop」防旧示例残留提示） |
 | 1.12.3 | 2026-11-18 | `TreeTableTemplate` 左树交互增强：节点 hover 操作从三按钮改「更多」下拉菜单（新增/编辑/删除）；新增 `onTreeAdd` / `treeAddText`（底部新增按钮，树超一屏时 sticky 吸底）；For Agents 页「当前 Skill 版本」残留 1.12.1 修正为实时一致 |
 | 1.12.2 | 2026-11-18 | 详情承载形态按复杂度分流：选型表「只读查看」拆为两行（字段少 / 单 Tab → 抽屉 `DrawerDetailTemplate`；多 Tab / 子表 / 大量字段 → 独立详情页 `DetailPageTemplate`），复杂查看与复杂编辑同样具备整页逃生口，避免多 Tab 详情被塞进 440px 抽屉；内容区页面类型表「抽屉表单」移除「只读查看」（消除与反模式 22 的矛盾），补「详情页（独立页）/ 抽屉详情」两行；修正「Skill 版本」引用行 1.12.0 漏改；补 `TreeTableTemplate` 覆盖（业务模板清单 + 页面类型选型表 + 速查章节，含最小示例） |
