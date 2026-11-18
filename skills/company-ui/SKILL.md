@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.12.1
-     updated: 2026-11-17
+     version: 1.12.2
+     updated: 2026-11-18
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.12.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.12.2`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -851,16 +851,17 @@ export function ProductCreatePage() {
 
 分组表单：children 里重复「`<SectionTitle title="组名" />` + `<BaseInfoForm ... />`」组合即可。
 
-### 新增/编辑表单形态选型（Drawer vs Modal vs 独立页）
+### 新增/编辑/查看形态选型（Drawer vs Modal vs 独立页）
 
-这是新增/编辑表单的**唯一选型口径**，不要凭习惯使用 Modal。
+这是新增/编辑/查看承载形态的**唯一选型口径**，不要凭习惯使用 Modal。
 
 | 场景 | 承载形态 | 组件 |
 |---|---|---|
 | 新增表单 | 抽屉 | `DrawerFormTemplate`（底层 `CompanyDrawer` + `BaseInfoForm`） |
 | 编辑、字段少 | 抽屉 | `DrawerFormTemplate` |
 | 编辑、字段多 / 多 Tab / 含子表 | 独立表单页 | `FormPageTemplate` |
-| 只读查看 | 抽屉 | `DrawerDetailTemplate`（440，遮罩可关，结构化头部+内容区滚动，字段用「label：value 纯文字行」） |
+| 只读查看、字段少 / 单 Tab | 抽屉 | `DrawerDetailTemplate`（440，遮罩可关，结构化头部+内容区滚动，字段用「label：value 纯文字行」） |
+| 只读查看、多 Tab / 子表 / 大量字段 | 独立详情页 | `DetailPageTemplate`（整页承载，API 见「DetailPageTemplate 速查」） |
 | 二次确认（删除/批量操作） | 弹窗 | `CompanyModal` |
 
 硬性规则：
@@ -870,7 +871,7 @@ export function ProductCreatePage() {
 - **Drawer 需自建 footer**：直接用本模板，`DrawerFormTemplate` 已内置「取消 + 保存」；禁止各业务页重复手写 footer。
 - **`maskClosable={false}`**：表单类抽屉默认禁止点遮罩关闭（`DrawerFormTemplate` 默认 false），避免填写中途误触丢数据；只有纯确认类 `CompanyModal` 才允许点遮罩关闭。
 - **保存中拦截关闭**：`submitLoading` 为 true 时关闭图标/取消/遮罩全部拦截，避免请求未完成丢失状态。
-- **宽度约定**：表单抽屉与详情抽屉统一 440px（对齐「线索推送配置详情」设计稿）；大量字段 / 多 Tab / 子表的复杂编辑转独立表单页 `FormPageTemplate`。
+- **宽度约定**：表单抽屉与详情抽屉统一 440px（对齐「线索推送配置详情」设计稿）；大量字段 / 多 Tab / 子表的复杂编辑转独立表单页 `FormPageTemplate`，复杂查看（多 Tab / 子表 / 大量字段）同理转独立详情页 `DetailPageTemplate`——不要把复杂详情塞进 440px 抽屉。
 - **只读详情禁用描述表格**：详情字段统一「label：value 纯文字行」（头部用 `fields` prop，内容区用 label 45% 灰 + value 88% 黑文字行），禁止 `CompanyDescriptions bordered`——440px 窄抽屉下表格列宽被挤压会崩坏。
 - **关闭后刷新列表**：保存成功后关闭抽屉并重新拉取/刷新列表数据。
 - **禁止把 `FormPageTemplate` 塞进 Drawer**：其源码为 `position: absolute; inset: 0`，在抽屉内会定位失效。
@@ -1071,8 +1072,9 @@ AI 生成完整后台页面时，**必须使用** **`AdminLayoutTemplate`**—�
 | 列表页 | `SmartListTemplate` | 用户管理 / 订单列表 / 数据查询 |
 | 统计列表页 | `StatisticsListPage` | 仪表盘 / 运营数据 / 报表 |
 | 表单页（独立页） | `FormPageTemplate` | 字段多 / 多 Tab / 含子表的新建、编辑、配置 |
-| 抽屉表单 | `DrawerFormTemplate` | 轻量新增 / 编辑 / 只读查看 |
-| 详情页 | `DetailPageTemplate` | 用户详情 / 订单详情 |
+| 抽屉表单 | `DrawerFormTemplate` | 轻量新增 / 编辑（字段少） |
+| 详情页（独立页） | `DetailPageTemplate` | 多 Tab / 子表 / 大量字段的详情 |
+| 抽屉详情 | `DrawerDetailTemplate` | 轻量只读查看（字段少 / 单 Tab） |
 
 #### 骨架布局契约（间距已固化在组件内部，无需关心）
 
@@ -1426,6 +1428,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.2 | 2026-11-18 | 详情承载形态按复杂度分流：选型表「只读查看」拆为两行（字段少 / 单 Tab → 抽屉 `DrawerDetailTemplate`；多 Tab / 子表 / 大量字段 → 独立详情页 `DetailPageTemplate`），复杂查看与复杂编辑同样具备整页逃生口，避免多 Tab 详情被塞进 440px 抽屉；内容区页面类型表「抽屉表单」移除「只读查看」（消除与反模式 22 的矛盾），补「详情页（独立页）/ 抽屉详情」两行；修正「Skill 版本」引用行 1.12.0 漏改 |
 | 1.12.1 | 2026-11-17 | 图标系统二次迭代：精选图标名修正（`delete-two` → `delete-four`），生成产物改紧凑单行格式（all-icons.tsx 24007 行体积优化），文档站 For Agents 页「当前 Skill 版本」残留 1.9.2 修正为实时一致 |
 | 1.12.0 | 2026-11-16 | `DrawerDetailTemplate` 按「线索推送配置详情」设计稿重构：新增结构化头部 Props（`name` / `tags` / `titleActions` / `fields`），默认宽度 640→440（表单/详情抽屉统一 440），禁用 bordered 描述表格（窄抽屉崩坏），字段统一「label：value 纯文字行」 |
 | 1.11.0 | 2026-11-12 | 红线 8 新增第 5 条：用户报 `demo-xxx` slug 时，到 `docs/template-components/*.md` grep `{#demo-xxx}` 定位对应「代码演示」并原样复用实现（slug = `demo-` 前缀 + 英文 kebab-case，同组件内唯一）；配套 6 个业务模板文档全部 demo 标题注入 `{#demo-xxx}` 稳定锚点（remark 插件 + 文档站 demo 标题旁可点击复制 chip），锚点/TOC/滚动高亮零回归 |
