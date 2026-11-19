@@ -50,7 +50,7 @@ export function App() {
 ```tsx
 import { useState } from 'react';
 import { Space } from 'antd';
-import { SmartListTemplate, CompanyButton, CompanyMessage, ActionCell } from '@donglegeyu/company-ui';
+import { SmartListTemplate, CompanyButton, CompanyMessage, ActionCell, FilterForm, ColumnSettingsPanel } from '@donglegeyu/company-ui';
 import type { FieldDefinition, ColumnField } from '@donglegeyu/company-ui';
 
 const fields: FieldDefinition[] = [
@@ -190,7 +190,7 @@ Do NOT hand-build CompanyForm rows or a bottom button bar — the template alrea
 
 ```tsx
 import { useState } from 'react';
-import { FormPageTemplate, SectionTitle, BaseInfoForm } from '@donglegeyu/company-ui';
+import { FormPageTemplate, SectionTitle, BaseInfoForm, FormFooterActions } from '@donglegeyu/company-ui';
 import type { FormField, FormValues } from '@donglegeyu/company-ui';
 
 const baseFields: FormField[] = [
@@ -474,7 +474,7 @@ interface StatisticsColumn<T> {
 ### Minimal Example
 
 ```tsx
-import { StatisticsListPage } from '@donglegeyu/company-ui';
+import { StatisticsListPage, ViewSwitcher } from '@donglegeyu/company-ui';
 import type { StatisticsColumn, StatisticCardConfig, PageResponse } from '@donglegeyu/company-ui';
 
 const statisticCards: StatisticCardConfig[] = [
@@ -523,7 +523,7 @@ bar is rendered by the template.
 ### Minimal Example
 
 ```tsx
-import { TreeTableTemplate } from '@donglegeyu/company-ui';
+import { TreeTableTemplate, ViewSwitcher } from '@donglegeyu/company-ui';
 import type { TreeTableNode, StatisticsColumn, PageResponse } from '@donglegeyu/company-ui';
 
 const treeData: TreeTableNode[] = [
@@ -763,7 +763,7 @@ Copy this navigation scaffold verbatim and only rename key/label/path/children. 
 `systemBottomMenus` + `businessMenus[].icon` together — miss any one and the nav differs from the demo.
 
 ```tsx
-import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage } from '@donglegeyu/company-ui';
+import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage, PageTitle, Sidebar, MultiTabs } from '@donglegeyu/company-ui';
 import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, FieldDefinition } from '@donglegeyu/company-ui';
 
 const domains: SidebarDomain[] = [{ id: 1, domainName: '华东大区' }];
