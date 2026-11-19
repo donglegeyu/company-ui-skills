@@ -938,6 +938,58 @@ export function EditDrawer() {
 }
 ```
 
+### DrawerDetailTemplate 速查（抽屉详情：轻量只读查看）
+
+模板提供：440px 抽屉（遮罩可关）+ 固定结构化头部（大标题 `name` + 状态标签 `tags` + 操作区 `titleActions` + 关键字段行 `fields`）+ 内容区独立滚动。字段统一「label：value 纯文字行」，**禁用 bordered 描述表格**（窄抽屉崩坏）。
+
+| Props | 类型 | 说明 |
+|---|---|---|
+| open / onClose | boolean / () => void | 受控显隐（`maskClosable` 默认 `true`，与表单抽屉的 `false` 相反） |
+| name | string | 头部大标题 |
+| tags | ReactNode | 标题旁状态标签（`CompanyTag`） |
+| titleActions | ReactNode | 右上角操作区（如「编辑」按钮） |
+| fields | DrawerDetailField[] | 头部关键字段行（`{ label, value }`） |
+| tabs | DrawerDetailTab[] | 多分组内容，TabBar 固定、仅页签内容滚动 |
+| footer | ReactNode | 底部操作区（只读详情默认不显示） |
+
+最小示例：
+
+```tsx
+import { useState } from 'react';
+import { DrawerDetailTemplate, CompanyButton, CompanyTag } from '@donglegeyu/company-ui';
+import type { DrawerDetailField } from '@donglegeyu/company-ui';
+
+const headerFields: DrawerDetailField[] = [
+  { label: '线索来源', value: '官网表单' },
+  { label: '负责人', value: '张三' },
+];
+
+export function LeadDetailDrawer() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <CompanyButton type="primary" onClick={() => setOpen(true)}>查看详情</CompanyButton>
+      <DrawerDetailTemplate
+        open={open}
+        onClose={() => setOpen(false)}
+        title="详情"
+        name="示例客户"
+        tags={<CompanyTag color="success">已上架</CompanyTag>}
+        titleActions={<CompanyButton type="primary">编辑</CompanyButton>}
+        fields={headerFields}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p>客户名称：示例客户</p>
+          <p>意向等级：A 级</p>
+        </div>
+      </DrawerDetailTemplate>
+    </>
+  );
+}
+```
+
+复杂详情（多 Tab / 子表 / 大量字段）转独立页 `DetailPageTemplate`，禁止塞进 440px 抽屉。
+
 ### DetailPageTemplate 速查（详情页：查看）
 
 模板提供：标题栏（返回 + 头像 + 主体名称 + 标签 + 操作区）+ 信息栅格 + Tab 面板。
@@ -1494,6 +1546,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.7 | 2026-11-19 | 补 `DrawerDetailTemplate` 速查章节（Props 表 + 最小示例，此前仅散见规则无示例）；`llms.txt` 索引版补齐 `TreeTableTemplate` / `DrawerFormTemplate` / `DrawerDetailTemplate` 三个最小示例章节——此前索引仅覆盖 5 个模板，AI 只读 llms.txt 时无法感知抽屉/左树右表模板的存在 |
 | 1.12.6 | 2026-11-19 | **修正按钮位置错误约定**（实战踩坑：`StatisticsListPage` / `TreeTableTemplate` 新增按钮 3 次返工才命中）：新增「〇.五 列表页工具栏按钮位置速查表」置于文件头部（两家族 API 差异 + 默认槽位确定性答案）；修正原错误指引「`StatisticsListPage` 新增放 `toolbarLeftExtra`」→ **新增/导出等主业务按钮放 `toolbarRightExtra`（列设置图标左侧，官方 demo `demo-statistics-list-page-basic` / `demo-tree-table-template-basic` 固定位置）**，`toolbarLeftExtra` 只放视图切换等次级工具；插槽纪律表标注各槽所属模板家族；反模式 27 扩充（含「放进不存在的 toolbarActions」变体）；同步修正 `llms.txt` slot discipline（titleActions 不再写 CompanyButton groups）与 `llms-full*.txt` StatisticsListPage props 表 |
 | 1.12.5 | 2026-11-18 | `CompanySidebar` 交互与图标体系增强：红线 7 图标行为修正——`icon` 未命中内置精选集时**原样透传按 Sprite symbol 渲染**（不再回退关键词匹配，需业务侧已加载对应 sprite，dev 警告去重）；hover 预切换精准化（relatedTarget 判向：来自二级栏预览/连续滑动保持/移向内容区立即恢复，点击是明确导航意图清 hover 预览）；MoreMenuDrawer 分组标题可点击、搜索面板改点击展开；业务空间切换按域缓存导航状态（`navStateMap` 模式见文档 demo） |
 | 1.12.4 | 2026-11-18 | `CompanySidebar` 侧边栏升级：移除 `secondMenus` prop（二级栏内容由组件按当前/悬浮一级菜单自动派生 + hover 预切换，业务 store 不被 hover 污染）；新增 `bottomExtra` 底部插槽与 `onDomainPopoverOpenChange` 业务空间弹层回调；AdminLayoutTemplate 速查章节同步（含「无需也不存在 secondMenus prop」防旧示例残留提示） |

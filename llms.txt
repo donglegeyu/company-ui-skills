@@ -218,6 +218,70 @@ export function ProductCreatePage() {
 re-implements what FormPageTemplate provides — use the template. For grouped forms, repeat
 `<SectionTitle title="组名" /> + <BaseInfoForm ... />` pairs inside children.
 
+## DrawerFormTemplate — Drawer Form (USE FOR create/edit drawers)
+
+Provides: 440px drawer with built-in Cancel/Save footer, submitLoading close-interception,
+maskClosable=false. Typically hosts `BaseInfoForm` inside.
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| open / onClose | boolean / () => void | controlled visibility |
+| title | string | drawer title |
+| onSubmit | () => void \| Promise<void> | fired by the built-in 保存 button |
+| submitLoading | boolean | blocks close (icon / cancel / mask) while saving |
+| footer | ReactNode | override built-in footer (rarely needed) |
+
+### Minimal Example
+
+```tsx
+import { useState, useRef } from 'react';
+import { DrawerFormTemplate, BaseInfoForm, CompanyButton, CompanySpace } from '@donglegeyu/company-ui';
+import type { FormField, FormValues, BaseInfoFormRef } from '@donglegeyu/company-ui';
+
+const fields: FormField[] = [
+  { name: 'name', label: '名称', type: 'input', required: true, rules: [{ required: true, message: '请输入名称' }] },
+];
+
+export function EditDrawer() {
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState<FormValues>({});
+  const [saving, setSaving] = useState(false);
+  const formRef = useRef<BaseInfoFormRef>(null);
+
+  const submit = async () => {
+    const valid = await formRef.current?.validate();
+    if (!valid) return;
+    setSaving(true);
+    // await saveApi(data)
+    setSaving(false);
+    setOpen(false);
+  };
+
+  return (
+    <CompanySpace orientation="vertical">
+      <CompanyButton onClick={() => setOpen(true)}>编辑</CompanyButton>
+      <DrawerFormTemplate
+        open={open}
+        onClose={() => setOpen(false)}
+        title="编辑"
+        submitLoading={saving}
+        onSubmit={submit}
+        maskClosable={false}
+      >
+        <BaseInfoForm ref={formRef} value={data} fields={fields} layout="vertical" onChange={setData} />
+      </DrawerFormTemplate>
+    </CompanySpace>
+  );
+}
+```
+
+⚠️ **Common AI mistakes**: hand-writing a footer (built-in Cancel+Save already provided); putting
+`FormPageTemplate` inside a drawer (its `position: absolute; inset: 0` skeleton breaks); using
+Modal for create/edit (always use DrawerFormTemplate); many fields / tabs / sub-tables → use the
+`FormPageTemplate` full page instead.
+
 ## DetailPageTemplate — Detail Page (USE FOR view/detail pages)
 
 Provides: title bar (back + avatar + primaryName + tags + actions) + info grid + tab panels.
@@ -317,6 +381,64 @@ export function CheckDetailPage() {
 }
 ```
 
+## DrawerDetailTemplate — Drawer Detail (USE FOR lightweight read-only drawers)
+
+Provides: 440px drawer (mask closable, `maskClosable` default **true** — read-only, unlike
+DrawerFormTemplate) with a FIXED structured header (name + tags + titleActions + fields) and a
+scrollable content area. Fields render as plain `label：value` text rows — bordered description
+tables are banned (they collapse at 440px).
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| open / onClose | boolean / () => void | controlled visibility |
+| name | string | headline in the structured header |
+| tags | ReactNode | status tags next to name (CompanyTag) |
+| titleActions | ReactNode | action buttons top-right (e.g. 编辑) |
+| fields | DrawerDetailField[] | key fields row in the header (`{ label, value }`) |
+| tabs | DrawerDetailTab[] | grouped content with fixed TabBar, per-tab scrolling |
+
+### Minimal Example
+
+```tsx
+import { useState } from 'react';
+import { DrawerDetailTemplate, CompanyButton, CompanyTag } from '@donglegeyu/company-ui';
+import type { DrawerDetailField } from '@donglegeyu/company-ui';
+
+const headerFields: DrawerDetailField[] = [
+  { label: '线索来源', value: '官网表单' },
+  { label: '负责人', value: '张三' },
+];
+
+export function LeadDetailDrawer() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <CompanyButton type="primary" onClick={() => setOpen(true)}>查看详情</CompanyButton>
+      <DrawerDetailTemplate
+        open={open}
+        onClose={() => setOpen(false)}
+        title="详情"
+        name="示例客户"
+        tags={<CompanyTag color="success">已上架</CompanyTag>}
+        titleActions={<CompanyButton type="primary">编辑</CompanyButton>}
+        fields={headerFields}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p>客户名称：示例客户</p>
+          <p>意向等级：A 级</p>
+        </div>
+      </DrawerDetailTemplate>
+    </>
+  );
+}
+```
+
+⚠️ **Common AI mistakes**: hand-building `CompanyDrawer` + a description table as a detail drawer
+(the template already handles header/scroll/Tab structure); using a `bordered` description table;
+stuffing complex multi-tab details into the drawer (→ use the `DetailPageTemplate` full page).
+
 ## StatisticsListPage — Statistics List Page (USE FOR stat-cards + table pages)
 
 Provides: statistic cards row + top search + advanced filter drawer + table + pagination.
@@ -381,6 +503,55 @@ export function CheckResultPage() {
 
 ⚠️ **Common AI mistakes**: using antd-style `title` in StatisticsColumn (use `label`); reading
 `data.records` (PageResponse is `list`); hand-building the stat-cards row with CompanyCard.
+
+## TreeTableTemplate — Tree-Table List Page (USE FOR tree-filtered list pages)
+
+Provides: left tree (built-in search + virtual root + node hover add/edit/delete + resizable
+width) + right side a FULL `StatisticsListPage` (all its props and slots work). The page title
+bar is rendered by the template.
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| treeData | TreeTableNode[] | left tree data (`key` / `label` / `parent`) |
+| rootNode | TreeTableNode | virtual "all" root, e.g. `{ key: 'all', label: '全部组织' }` |
+| onTreeSelect | (key: string) => void | tree node click |
+| treeWidth / minTreeWidth / maxTreeWidth | number | resizable tree width (default 232 / 200 / 480) |
+| ...StatisticsListPageProps | — | right table inherits the full contract (columns / fetchData / statisticCards / filterFields / toolbar slots) |
+
+### Minimal Example
+
+```tsx
+import { TreeTableTemplate } from '@donglegeyu/company-ui';
+import type { TreeTableNode, StatisticsColumn, PageResponse } from '@donglegeyu/company-ui';
+
+const treeData: TreeTableNode[] = [
+  { key: 'east', label: '华东燃气公司' },
+  { key: 'hangzhou', label: '杭州分公司', parent: 'east' },
+];
+const columns: StatisticsColumn<Record<string, unknown>>[] = [
+  { key: 'name', label: '员工姓名' },
+];
+
+export function OrgMembersPage() {
+  return (
+    <TreeTableTemplate
+      title="组织与权限"
+      treeData={treeData}
+      rootNode={{ key: 'all', label: '全部组织' }}
+      onTreeSelect={(key) => console.log('选中节点', key)}
+      columns={columns}
+      fetchData={async (): Promise<PageResponse<Record<string, unknown>>> =>
+        ({ list: [], total: 0, pageNum: 1, pageSize: 10 })}
+    />
+  );
+}
+```
+
+⚠️ **Common AI mistakes**: 新增/导出 buttons go into `toolbarRightExtra` (left of the
+column-settings gear) — NOT `toolbarActions`, which does NOT exist on this template;
+hand-assembling `CompanyTree` + `StatisticsListPage` side by side.
 
 ## Design Tokens
 
