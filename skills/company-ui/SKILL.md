@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.12.5
-     updated: 2026-11-18
+     version: 1.13.1
+     updated: 2026-11-19
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.12.5`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.13.0`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -179,7 +179,7 @@ import { SmartListTemplate } from '@donglegeyu/company-ui';
 | 优先级 | 组件层 | 示例 | 何时使用 |
 |---|---|---|---|
 | 1（最高） | 业务模板 | `AdminLayoutTemplate` / `SmartListTemplate` / `FormPageTemplate` / `DetailPageTemplate` / `StatisticsListPage` | 后台骨架 / 标准列表页 / 表单页 / 详情页 / 统计页 |
-| 2 | 共享组件 | `ActionCell` / `BaseInfoForm` / `PageTitle` / `SectionTitle` | 业务模板不覆盖的局部场景 |
+| 2 | 共享组件 | `ActionCell` / `BaseInfoForm` / `PageTitle` / `PageTitleActions` / `SectionTitle` | 业务模板不覆盖的局部场景 |
 | 3（最低） | 基础组件 | `CompanyTable` / `CompanyForm` / `CompanyButton` | 基础组件无法满足时的手动拼装 |
 
 ### 7. 图标一律使用内置图标键（禁止 antd 图标进菜单）
@@ -519,7 +519,7 @@ root.render(
 | 边框流光 | `CompanyBorderBeam` | 动画边框 |
 | 全局化配置 | `CompanyConfigProvider` | 全局配置 |
 
-### 共享组件（14 个）
+### 共享组件（15 个）
 
 | 组件 | 导出名 | 用途 |
 |---|---|---|
@@ -530,6 +530,7 @@ root.render(
 | 底部操作栏 | `FormFooterActions` | 表单底部固定操作栏 |
 | 视图切换器 | `ViewSwitcher` | 列表视图切换/保存/另存为（内置保存抽屉，SmartListTemplate、StatisticsListPage 内置） |
 | 页面标题 | `PageTitle` | 标准页头 |
+| 页面标题操作区 | `PageTitleActions` | 页头右侧操作区：`.Text` 描述文字（三级灰）/ `.Link` 主色链接 / 按钮混排，样式内置免手写 |
 | 分组标题 | `SectionTitle` | 区块分隔标题 |
 | 无障碍检查 | `AccessibilityChecker` | 无障碍审计 |
 | SVG 图标 | `SvgIcon` | SVG 图标组件 |
@@ -694,10 +695,12 @@ interface FieldDefinition {
 
 业务模板的扩展插槽是**固定的几个**。自定义内容只能放进这些插槽——禁止在模板外再包一层 UI，也**禁止自创用户没要的内容**：
 
+**两层插槽模型**：底层是 `PageTitle` 本体的 2 个源码插槽（`titleExtra` = 标题右侧组、`actions` = 标题栏最右独立区），各模板在其上拆装出模板层插槽（业务实际传的 props）。`title` 是标题文字本身不是插槽；`titleSuffix` 已废弃（内部桥接到 `titleExtra`）。模板层 → 源码槽位映射：`SmartListTemplate` 的 `titleExtra` + `titleActions` 都装入 `titleExtra` 组（自定义标签左 → 视图切换 → titleActions 右）、`titleRightActions` → `actions`；`StatisticsListPage` / `TreeTableTemplate` 的 `titleExtra` 装入 `titleExtra` 组（视图切换左 → 自定义标签右）、`titleActions` → `actions`；`DetailPageTemplate` / `FormPageTemplate` 直接透传；`DrawerDetailTemplate` 抽屉头部自绘，不经过 `PageTitle`。**`SmartListTemplate` 的 `titleActions` 是过渡 prop**（内部映射到 `titleExtra` 组尾部保持既有位置，后续版本将收敛到 `titleExtra`），新代码建议直接用 `titleExtra`。
+
 | 插槽 | 语义 | 允许的内容 |
 |---|---|---|
 | `titleExtra` | 标题的延伸/补充（状态标签、计数） | antd `Tag` / `Space` 包 Tag——**仅当用户需求明确提到计数/状态时才传** |
-| `titleActions` / `titleRightActions` | 标题栏最右侧独立操作区——**只放页面级帮助入口**（「快速上手」） | 帮助入口文案 + `CompanyTypography.Link`；**禁止放业务按钮** |
+| `titleActions` / `titleRightActions` | 标题栏最右侧独立操作区——**只放页面级帮助入口**（「快速上手」） | 帮助入口文案 + `PageTitleActions.Text` / `PageTitleActions.Link`（样式内置）；**禁止放业务按钮**；SmartListTemplate 的 `titleActions` 是**过渡 prop**（建议直接用 `titleExtra`） |
 | `toolbarActions`（仅 `SmartListTemplate`） | 工具栏左侧主操作区——业务按钮 | `CompanyButton` 按钮组（主 → 次 → 危险） |
 | `toolbarRightActions`（仅 `SmartListTemplate`） | 工具栏右侧次要/工具区——次要或危险操作 | `CompanyButton` 按钮组（危险操作放最右） |
 | `toolbarRightExtra`（仅 `StatisticsListPage` / `TreeTableTemplate`） | 工具栏右侧（**列设置图标左侧**）——主业务按钮 | `CompanyButton` 按钮组（新增等，与官方 demo 一致） |
@@ -715,7 +718,7 @@ interface FieldDefinition {
 1. **`titleActions` 只放帮助类入口**（如「快速上手」），**明确禁止**放列表业务按钮：新增、导出、批量操作、删除等一律不放。
 2. **列表业务按钮统一进工具栏**：左侧主操作区 `toolbarActions`，右侧次要/工具区 `toolbarRightActions`。
 3. **排列顺序统一为「主操作 → 次级操作 → 危险操作」**（如「新增」→「导出」→「批量删除」），同一容器内用 `<CompanySpace size={8}>` 保持 8px 间距与分组，危险操作放最右。
-4. **需要往页面右侧加按钮时，优先复用页面标题区插槽**（`SmartListTemplate` 用 `titleActions` / `titleExtra`；`StatisticsListPage` 用 `titleActions` / `titleExtra`），不要默认新开一条工具栏。标题区承载页面级入口：帮助入口文案用「快速上手」，提示文案「请查看 系统使用指南」，不承载业务动作。
+4. **需要往页面右侧加按钮时，优先复用页面标题区插槽**（`SmartListTemplate` 用 `titleExtra`（过渡 prop `titleActions` 仍在但建议直接用 `titleExtra`）/ `titleRightActions`；`StatisticsListPage` 用 `titleActions` / `titleExtra`），不要默认新开一条工具栏。标题区承载页面级入口：帮助入口文案用「快速上手」，提示文案「请查看 系统使用指南」，不承载业务动作。「描述文字 + 链接」组合直接用共享组件 `PageTitleActions`（`.Text` 三级灰 / `.Link` 主色，样式内置），不要手写 `<span>` + style。
 5. **`StatisticsListPage` / `TreeTableTemplate` 的工具栏限制**：它们**没有** `toolbarActions` / `toolbarRightActions`，工具栏自定义槽只有两个：`toolbarRightExtra`（**列设置图标左侧**）与 `toolbarLeftExtra`（搜索框右侧）。**新增/导出等主业务按钮放 `toolbarRightExtra`**——这是官方 demo 的固定位置；`toolbarLeftExtra` 只放视图切换等次级工具。其 `titleActions` 仍只放帮助入口。
 6. **删除按钮默认用主色**（`type="primary"` 或默认按钮样式），**不得默认使用 `danger` 危险色**；同一容器已有主色「新增」时，删除用默认或 `type="text"` 按钮，避免两个主色按钮并排抢焦点。二次确认弹层主操作、不可恢复的批量删除等确需红色的场景，**先与用户确认**后再用。
 
@@ -1546,6 +1549,8 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.13.1 | 2026-11-19 | 插槽纪律补**两层插槽模型**：`PageTitle` 本体仅 2 个源码插槽（`titleExtra` / `actions`），各模板模板层插槽的映射关系逐一列明（SmartListTemplate 组装 / StatisticsListPage·TreeTable 组装 / Detail·Form 透传 / DrawerDetail 自绘）；`SmartListTemplate` 的 `titleActions` 标注为**过渡 prop**（后续版本收敛到 `titleExtra`，新代码建议直接用 `titleExtra`）；`titleSuffix` 标注废弃别名；SmartListTemplate 头部已迁移到 `PageTitle` 组件渲染 |
+| 1.13.0 | 2026-11-19 | 共享组件 14→15：新增 `PageTitleActions`（页面标题右侧操作区——`.Text` 描述文字三级灰 / `.Link` 主色链接 / 裸字符串自动套灰、按钮原样透出，样式内置免手写 span+style）；插槽纪律 `titleActions` 允许内容与列表页按钮布局规则 4 同步指向该组件；修正头部 `version` 与 For Agents 页「当前 Skill 版本」残留 1.12.5 |
 | 1.12.7 | 2026-11-19 | 补 `DrawerDetailTemplate` 速查章节（Props 表 + 最小示例，此前仅散见规则无示例）；`llms.txt` 索引版补齐 `TreeTableTemplate` / `DrawerFormTemplate` / `DrawerDetailTemplate` 三个最小示例章节——此前索引仅覆盖 5 个模板，AI 只读 llms.txt 时无法感知抽屉/左树右表模板的存在 |
 | 1.12.6 | 2026-11-19 | **修正按钮位置错误约定**（实战踩坑：`StatisticsListPage` / `TreeTableTemplate` 新增按钮 3 次返工才命中）：新增「〇.五 列表页工具栏按钮位置速查表」置于文件头部（两家族 API 差异 + 默认槽位确定性答案）；修正原错误指引「`StatisticsListPage` 新增放 `toolbarLeftExtra`」→ **新增/导出等主业务按钮放 `toolbarRightExtra`（列设置图标左侧，官方 demo `demo-statistics-list-page-basic` / `demo-tree-table-template-basic` 固定位置）**，`toolbarLeftExtra` 只放视图切换等次级工具；插槽纪律表标注各槽所属模板家族；反模式 27 扩充（含「放进不存在的 toolbarActions」变体）；同步修正 `llms.txt` slot discipline（titleActions 不再写 CompanyButton groups）与 `llms-full*.txt` StatisticsListPage props 表 |
 | 1.12.5 | 2026-11-18 | `CompanySidebar` 交互与图标体系增强：红线 7 图标行为修正——`icon` 未命中内置精选集时**原样透传按 Sprite symbol 渲染**（不再回退关键词匹配，需业务侧已加载对应 sprite，dev 警告去重）；hover 预切换精准化（relatedTarget 判向：来自二级栏预览/连续滑动保持/移向内容区立即恢复，点击是明确导航意图清 hover 预览）；MoreMenuDrawer 分组标题可点击、搜索面板改点击展开；业务空间切换按域缓存导航状态（`navStateMap` 模式见文档 demo） |
