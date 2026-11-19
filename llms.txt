@@ -129,8 +129,14 @@ extra UI around the template, and never invent slot content the user didn't ask 
 | Slot | Semantics | Allowed content |
 |---|---|---|
 | titleExtra | extension of the title (status tag, count) | antd `Tag` / `Space` with Tags ONLY when the user's spec mentions counts or status |
-| titleRightActions / titleActions | title-bar action area (decoupled from title) | CompanyButton groups |
-| toolbarActions / toolbarRightActions | toolbar left/right actions | CompanyButton groups |
+| titleRightActions / titleActions | title-bar action area — help entry (「快速上手」) ONLY, NEVER business buttons | help-entry text + `CompanyTypography.Link` |
+| toolbarActions / toolbarRightActions (SmartListTemplate ONLY) | toolbar left = primary business buttons; right = secondary/danger | CompanyButton groups (primary → secondary → danger) |
+| toolbarRightExtra (StatisticsListPage / TreeTableTemplate ONLY) | toolbar right side, LEFT of the column-settings gear — THE slot for 新增/导出 primary business buttons (fixed position in official demos) | CompanyButton groups |
+| toolbarLeftExtra (StatisticsListPage / TreeTableTemplate ONLY) | toolbar left side, right of the search box — secondary tools only | view-switcher `Radio.Group` etc. |
+
+> StatisticsListPage / TreeTableTemplate have NO `toolbarActions` / `toolbarRightActions` — do NOT
+> cross-apply slot names between the two template families. 新增 button in StatisticsListPage /
+> TreeTableTemplate goes into `toolbarRightExtra` (left of the column-settings gear).
 
 Rules:
 1. **No self-invented content.** Stat-tag clusters like「共 X 条 / 启用 X / 禁用 X」are CUSTOM extras,

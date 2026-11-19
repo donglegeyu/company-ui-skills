@@ -73,6 +73,22 @@ npm i @donglegeyu/company-ui@latest
 
 ***
 
+## 〇.五、列表页工具栏按钮位置速查（写代码前先对号入座，一次命中）
+
+两个模板家族的工具栏 API **完全不同，禁止互相套用**。按钮位置按下表，**禁止凭感觉挑槽**：
+
+| 模板 | 新增/导出/批量等主业务按钮 | 次级工具（视图切换 Radio 等） | 帮助入口 |
+|---|---|---|---|
+| `SmartListTemplate` | `toolbarActions`（工具栏左侧） | `toolbarRightActions`（工具栏右侧） | `titleActions` |
+| `StatisticsListPage` / `TreeTableTemplate` | **`toolbarRightExtra`（列设置图标左侧）** | `toolbarLeftExtra`（搜索框右侧） | `titleActions` |
+
+- **新增按钮在 `StatisticsListPage` / `TreeTableTemplate` 里放 `toolbarRightExtra`**——列设置图标左侧，这是官方 demo（`demo-statistics-list-page-basic` / `demo-tree-table-template-basic`）的固定位置
+- `StatisticsListPage` / `TreeTableTemplate` **没有** `toolbarActions` / `toolbarRightActions`，传了不渲染
+- `titleActions` 全家族只放「快速上手」帮助入口，禁放业务按钮（详见「列表页按钮布局纪律」）
+- `TreeTableTemplate` 继承 `StatisticsListPage` 的全部工具栏 props
+
+***
+
 ## 一、八条红线（违反即不合格）
 
 ### 1. 禁止使用 antd 原生组件
@@ -682,8 +698,10 @@ interface FieldDefinition {
 |---|---|---|
 | `titleExtra` | 标题的延伸/补充（状态标签、计数） | antd `Tag` / `Space` 包 Tag——**仅当用户需求明确提到计数/状态时才传** |
 | `titleActions` / `titleRightActions` | 标题栏最右侧独立操作区——**只放页面级帮助入口**（「快速上手」） | 帮助入口文案 + `CompanyTypography.Link`；**禁止放业务按钮** |
-| `toolbarActions` | 工具栏左侧主操作区——业务按钮 | `CompanyButton` 按钮组（主 → 次 → 危险） |
-| `toolbarRightActions` | 工具栏右侧次要/工具区——次要或危险操作 | `CompanyButton` 按钮组（危险操作放最右） |
+| `toolbarActions`（仅 `SmartListTemplate`） | 工具栏左侧主操作区——业务按钮 | `CompanyButton` 按钮组（主 → 次 → 危险） |
+| `toolbarRightActions`（仅 `SmartListTemplate`） | 工具栏右侧次要/工具区——次要或危险操作 | `CompanyButton` 按钮组（危险操作放最右） |
+| `toolbarRightExtra`（仅 `StatisticsListPage` / `TreeTableTemplate`） | 工具栏右侧（**列设置图标左侧**）——主业务按钮 | `CompanyButton` 按钮组（新增等，与官方 demo 一致） |
+| `toolbarLeftExtra`（仅 `StatisticsListPage` / `TreeTableTemplate`） | 工具栏左侧（搜索框右侧）——次级工具 | 视图切换 `Radio.Group`、批量入口等 |
 
 三条规则：
 1. **禁止自创内容**：像「共 X 条 / 启用 X / 禁用 X」这类统计标签是**自定义 titleExtra，非模板内置**——用户需求里没提计数就完全不传 titleExtra（默认：不传）
@@ -698,7 +716,7 @@ interface FieldDefinition {
 2. **列表业务按钮统一进工具栏**：左侧主操作区 `toolbarActions`，右侧次要/工具区 `toolbarRightActions`。
 3. **排列顺序统一为「主操作 → 次级操作 → 危险操作」**（如「新增」→「导出」→「批量删除」），同一容器内用 `<CompanySpace size={8}>` 保持 8px 间距与分组，危险操作放最右。
 4. **需要往页面右侧加按钮时，优先复用页面标题区插槽**（`SmartListTemplate` 用 `titleActions` / `titleExtra`；`StatisticsListPage` 用 `titleActions` / `titleExtra`），不要默认新开一条工具栏。标题区承载页面级入口：帮助入口文案用「快速上手」，提示文案「请查看 系统使用指南」，不承载业务动作。
-5. **`StatisticsListPage` 的工具栏限制**：它没有 `toolbarActions` / `toolbarRightActions`，工具栏自定义槽是 `toolbarLeftExtra`（搜索框右侧）与 `toolbarRightExtra`（列设置左侧）——业务按钮（新增/导出/批量）进这两个槽；其 `titleActions` 仍只放帮助入口。
+5. **`StatisticsListPage` / `TreeTableTemplate` 的工具栏限制**：它们**没有** `toolbarActions` / `toolbarRightActions`，工具栏自定义槽只有两个：`toolbarRightExtra`（**列设置图标左侧**）与 `toolbarLeftExtra`（搜索框右侧）。**新增/导出等主业务按钮放 `toolbarRightExtra`**——这是官方 demo 的固定位置；`toolbarLeftExtra` 只放视图切换等次级工具。其 `titleActions` 仍只放帮助入口。
 6. **删除按钮默认用主色**（`type="primary"` 或默认按钮样式），**不得默认使用 `danger` 危险色**；同一容器已有主色「新增」时，删除用默认或 `type="text"` 按钮，避免两个主色按钮并排抢焦点。二次确认弹层主操作、不可恢复的批量删除等确需红色的场景，**先与用户确认**后再用。
 
 > **自动校验闸门**：`scripts/verify-no-danger-delete.mjs` 会扫描本 Skill 示例、`docs/` 代码演示以及传入的源码目录，「删除类按钮 + `danger`」命中即失败（见「九、生成后自动校验」）——删除配色不再只是文档建议。
@@ -1023,14 +1041,14 @@ export function CheckDetailPage() {
 | actionColumn | { width?, title?, render } | 自动追加固定右侧的操作列 |
 | titleExtra | ReactNode | 紧跟标题右侧（状态标签、计数/月份选择器） |
 | titleActions | ReactNode | 标题栏最右侧独立操作区——**只放帮助入口**（「快速上手」），禁放业务按钮 |
-| toolbarLeftExtra | ReactNode | 工具栏左侧自定义区（搜索框右侧）——新增/导出等业务按钮放这里 |
-| toolbarRightExtra | ReactNode | 工具栏右侧自定义区（列设置左侧）——次要/危险按钮放这里 |
+| toolbarRightExtra | ReactNode | 工具栏右侧（**列设置图标左侧**）——**新增/导出等主业务按钮放这里**（官方 demo 固定位置） |
+| toolbarLeftExtra | ReactNode | 工具栏左侧（搜索框右侧）——视图切换 `Radio.Group` 等次级工具放这里 |
 | viewEndpoint | string | 视图配置接口地址；传入后页面标题右侧（带分割线）显示视图切换器（与 `SmartListTemplate` 一致，含默认视图/已修改/保存/另存为） |
 | onViewChange | ({ schemeId, filters }) => void | 视图切换回调，返回视图 id 与条件；组件会按条件重建筛选标签并重新请求数据 |
 | onRefresh | (filterParams) => void | 传入才显示刷新按钮 |
 | defaultPageSize / rowKey / size / scrollY | — | 表格行为 |
 
-> **按钮归属**：本模板**没有** `toolbarActions` / `toolbarRightActions`。需要往页面右侧加按钮时，优先复用标题区插槽（`titleActions` / `titleExtra`），不要为此新开工具栏；但业务类按钮（新增/导出/批量）按「列表页按钮布局纪律」进 `toolbarLeftExtra` / `toolbarRightExtra`，`titleActions` 只放「快速上手」帮助入口（文案「快速上手」，提示「请查看 系统使用指南」）。
+> **按钮归属**：本模板**没有** `toolbarActions` / `toolbarRightActions`。**新增/导出/批量等主业务按钮放 `toolbarRightExtra`（列设置图标左侧，与官方 demo 一致）**；视图切换 `Radio.Group` 等次级工具放 `toolbarLeftExtra`（搜索框右侧）；`titleActions` 只放「快速上手」帮助入口（文案「快速上手」，提示「请查看 系统使用指南」）。
 
 最小示例：
 
@@ -1315,7 +1333,7 @@ interface AdminLayoutPageItem { key: string; label: string; path?: string; compo
 | 24 | AI 动作直连接口：把模型返回的 action 直接 `fetch` / 调用业务 API | 所有 AI 发起的动作必须经 `AiActionGuard` 的 `run` 走策略/确认/实时权限/幂等/审计，禁止绕过闸门 |
 | 25 | 权限结果缓存复用：`checkPermission` 只调一次、结果存 state 或跨动作复用 | 每次 `run` / `canRun` 都实时调用 `checkPermission`，组件不缓存任何权限结果 |
 | 26 | 未知动作默认放行：策略表里没登记就直接执行 | 白名单 + 默认拒绝：未知动作一律返回 `{ ok: false, reason: 'denied' }` |
-| 27 | 把新增/导出/批量删除等业务按钮塞进 `titleActions`（列表页标题区） | **标题区只放帮助入口**（「快速上手」）；业务按钮进 `toolbarActions`（主 → 次）或 `toolbarRightActions`（危险）；`StatisticsListPage` 用 `toolbarLeftExtra` / `toolbarRightExtra`。标题区空间窄、与页面级操作语义混淆，窄屏下会挤压标题（详见「列表页按钮布局纪律」一节） |
+| 27 | 把新增/导出/批量删除等业务按钮塞进 `titleActions`（列表页标题区），或在 `StatisticsListPage` / `TreeTableTemplate` 里把新增按钮放进 `toolbarLeftExtra` / 不存在的 `toolbarActions` | **标题区只放帮助入口**（「快速上手」）。业务按钮位置按家族固定：`SmartListTemplate` → `toolbarActions`（主 → 次）/ `toolbarRightActions`（危险）；`StatisticsListPage` / `TreeTableTemplate` → **`toolbarRightExtra`（列设置图标左侧，官方 demo 固定位置）**，`toolbarLeftExtra` 只放视图切换等次级工具。标题区空间窄、与页面级操作语义混淆，窄屏下会挤压标题（详见「列表页按钮布局纪律」一节与「〇.五 速查表」） |
 | 28 | 模板扩展点自创结构 / 用 antd 原生组件替代官方示例（如月份选择器裸用 `DatePicker`、操作列手拼按钮） | 先查 `docs/` 对应组件文档的「代码演示」并原样复用：月份选择器 = `CompanyDropdown` + `type="text"` 按钮 + `slp-month-trigger` 类；操作列 = `ActionCell`。自创结构会丢 `slp-*` 样式联动、主题 Token 与弹层定位（详见红线 8） |
 | 29 | 删除按钮默认写成 `danger` 危险色（操作列、工具栏批量删除） | 删除默认主色（`type="primary"` 或默认按钮样式），用 `ActionCell` 的 `confirm: true` + `confirmTitle` 做二次确认；同容器已有主色「新增」时，删除用默认或 `type="text"` 按钮；二次确认弹层主操作、不可恢复批量删除等确需红色的场景先与用户确认（详见「列表页按钮布局纪律」第 6 条） |
 
@@ -1476,6 +1494,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.12.6 | 2026-11-19 | **修正按钮位置错误约定**（实战踩坑：`StatisticsListPage` / `TreeTableTemplate` 新增按钮 3 次返工才命中）：新增「〇.五 列表页工具栏按钮位置速查表」置于文件头部（两家族 API 差异 + 默认槽位确定性答案）；修正原错误指引「`StatisticsListPage` 新增放 `toolbarLeftExtra`」→ **新增/导出等主业务按钮放 `toolbarRightExtra`（列设置图标左侧，官方 demo `demo-statistics-list-page-basic` / `demo-tree-table-template-basic` 固定位置）**，`toolbarLeftExtra` 只放视图切换等次级工具；插槽纪律表标注各槽所属模板家族；反模式 27 扩充（含「放进不存在的 toolbarActions」变体）；同步修正 `llms.txt` slot discipline（titleActions 不再写 CompanyButton groups）与 `llms-full*.txt` StatisticsListPage props 表 |
 | 1.12.5 | 2026-11-18 | `CompanySidebar` 交互与图标体系增强：红线 7 图标行为修正——`icon` 未命中内置精选集时**原样透传按 Sprite symbol 渲染**（不再回退关键词匹配，需业务侧已加载对应 sprite，dev 警告去重）；hover 预切换精准化（relatedTarget 判向：来自二级栏预览/连续滑动保持/移向内容区立即恢复，点击是明确导航意图清 hover 预览）；MoreMenuDrawer 分组标题可点击、搜索面板改点击展开；业务空间切换按域缓存导航状态（`navStateMap` 模式见文档 demo） |
 | 1.12.4 | 2026-11-18 | `CompanySidebar` 侧边栏升级：移除 `secondMenus` prop（二级栏内容由组件按当前/悬浮一级菜单自动派生 + hover 预切换，业务 store 不被 hover 污染）；新增 `bottomExtra` 底部插槽与 `onDomainPopoverOpenChange` 业务空间弹层回调；AdminLayoutTemplate 速查章节同步（含「无需也不存在 secondMenus prop」防旧示例残留提示） |
 | 1.12.3 | 2026-11-18 | `TreeTableTemplate` 左树交互增强：节点 hover 操作从三按钮改「更多」下拉菜单（新增/编辑/删除）；新增 `onTreeAdd` / `treeAddText`（底部新增按钮，树超一屏时 sticky 吸底）；For Agents 页「当前 Skill 版本」残留 1.12.1 修正为实时一致 |
