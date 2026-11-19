@@ -160,7 +160,7 @@ ALREADY SHIP WITH — pass data/config only, never re-add a layer the library al
 | Brand logo | Built-in default logo ships in the package since 1.2.39 | `logo="/logo.svg"` — pass only when the user explicitly wants a custom brand |
 | Admin skeleton | AdminLayoutTemplate ships sidebar + tabs + content area | manual CompanySidebar + CompanyMultiTabs assembly (advanced usage only) |
 | Content spacing | Templates ship their own padding/background; zero-spacing container is inside AdminLayoutTemplate | padding/margin/background on `contentStyle` or outer wrappers |
-| Toolbar buttons | Template toolbars are TEXT-label CompanyButtons | antd icons on CompanyButton |
+| Toolbar buttons | Template toolbars are TEXT-label CompanyButton | antd icons on CompanyButton |
 | Header decorations | The header is managed by the template | self-invented `titleExtra` stat tags unless the user asked for counts |
 
 **Before writing any decoration/icon/extra UI into a business template, ask: does the component
