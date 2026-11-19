@@ -763,7 +763,7 @@ Copy this navigation scaffold verbatim and only rename key/label/path/children. 
 `systemBottomMenus` + `businessMenus[].icon` together — miss any one and the nav differs from the demo.
 
 ```tsx
-import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage, PageTitle, Sidebar, MultiTabs } from '@donglegeyu/company-ui';
+import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage, PageTitle, CompanySidebar, CompanyMultiTabs } from '@donglegeyu/company-ui';
 import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, FieldDefinition } from '@donglegeyu/company-ui';
 
 const domains: SidebarDomain[] = [{ id: 1, domainName: '华东大区' }];
