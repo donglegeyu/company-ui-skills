@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.13.2
-     updated: 2026-11-19
+     version: 1.13.3
+     updated: 2026-11-23
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.13.2`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.13.3`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -519,12 +519,13 @@ root.render(
 | 边框流光 | `CompanyBorderBeam` | 动画边框 |
 | 全局化配置 | `CompanyConfigProvider` | 全局配置 |
 
-### 共享组件（15 个）
+### 共享组件（16 个）
 
 | 组件 | 导出名 | 用途 |
 |---|---|---|
 | 操作按钮组 | `ActionCell` | 表格操作列，超 2 个自动折叠 |
 | 多列表单 | `BaseInfoForm` | 字段驱动的多列表单 |
+| 账号切换器 | `CompanyAccountSwitcher` | 多账号切换面板（账号列表 + 当前项对勾 + 登录更多 + 移除），纯 UI 受控，登录逻辑业务侧自接 |
 | 色阶 | `ColorScale` | 颜色渐变选择器 |
 | 省略文本 | `EllipsisText` | 文本溢出 + Tooltip |
 | 底部操作栏 | `FormFooterActions` | 表单底部固定操作栏 |
@@ -1550,6 +1551,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.13.3 | 2026-11-23 | 共享组件 15→16：新增 `CompanyAccountSwitcher`（多账号切换面板——账号列表 + 当前项对勾 + 登录更多入口 + 移除按钮，纯 UI 受控，登录/会话逻辑业务侧自接）；`CompanySidebar` / `AdminLayoutTemplate` 头像下拉新增 `accountSwitcher`（传入后出现「切换账号」入口，下拉原地切换为面板，飞书式两级气泡）与 `userMenuExtra`（自定义入口插槽）插槽，`onThemeSettings` 移除 |
 | 1.13.2 | 2026-11-19 | **插槽口径反转**（承接 1.13.1）：`SmartListTemplate` 的 `titleExtra` 装配顺序统一为「分割线 → 视图切换（恒渲染）→ 自定义标签」（与 `StatisticsListPage` / `TreeTableTemplate` 对齐，消除两套装配）；`titleActions` 确立为**长期正式插槽**（非过渡 prop），`titleRightActions` 标注废弃仅兼容保留；工具栏：`StatisticsListPage` / `TreeTableTemplate` 的 `toolbarLeftExtra` 从筛选后移到**内置「列设置/密度/刷新」同组左侧**（业务按钮与内置图标紧挨，搜索框/筛选仍在最左），`toolbarRightExtra` 只放轻控件；速查表 / 两层插槽模型 / 纪律表 / 规则 2·4·5 / StatisticsListPage props 表 / 反模式 27 同步反转；Skill 版本引用行残留 1.13.0 修正为实时一致 |
 | 1.13.1 | 2026-11-19 | ~~插槽纪律补两层插槽模型~~（该版本把 `titleActions` 误标为「过渡 prop 收敛到 `titleExtra`」，方向定反，已在 1.13.2 反转）；保留有效部分：`PageTitle` 本体仅 2 个源码插槽（`titleExtra` / `actions`）的两层模型阐述、各模板映射关系列明、`titleSuffix` 废弃别名、SmartListTemplate 头部迁移到 `PageTitle` 组件渲染 |
 | 1.13.0 | 2026-11-19 | 共享组件 14→15：新增 `PageTitleActions`（页面标题右侧操作区——`.Text` 描述文字三级灰 / `.Link` 主色链接 / 裸字符串自动套灰、按钮原样透出，样式内置免手写 span+style）；插槽纪律 `titleActions` 允许内容与列表页按钮布局规则 4 同步指向该组件；修正头部 `version` 与 For Agents 页「当前 Skill 版本」残留 1.12.5 |

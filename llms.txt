@@ -1,6 +1,6 @@
 # @donglegeyu/company-ui
 
-> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 14 shared components, 10 business template components. Unified brand tokens, strict usage rules.
+> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 16 shared components, 10 business template components. Unified brand tokens, strict usage rules.
 
 ## Installation
 
@@ -42,7 +42,7 @@ export function App() {
 ### Template priority order (highest first):
 
 1. **Business templates**: AdminLayoutTemplate (admin skeleton) / SmartListTemplate (list) / FormPageTemplate (form) / DetailPageTemplate (detail) / StatisticsListPage — one-shot page solutions
-2. **Shared components**: ActionCell / BaseInfoForm / PageTitle / SectionTitle / FormFooterActions — reusable business-level pieces
+2. **Shared components**: ActionCell / BaseInfoForm / CompanyAccountSwitcher / PageTitle / SectionTitle / FormFooterActions — reusable business-level pieces
 3. **Basic components**: CompanyTable / CompanyForm / CompanyButton — manual assembly only when templates can't cover the use case
 
 ## SmartListTemplate — Minimal Example
@@ -684,6 +684,7 @@ hand-assembling `CompanyTree` + `StatisticsListPage` side by side.
 - [筛选表单 FilterForm](/template-components/filter-form): Standalone filter form
 - [列设置面板 ColumnSettingsPanel](/template-components/column-settings-panel): Column visibility/order settings
 - [图标选择器 IconSelect](/template-components/icon-select): Icon picker with search
+- [账号切换器 AccountSwitcher](/template-components/company-account-switcher): Multi-account switch panel (list + current check + add/remove) — pure UI controlled, wire login logic yourself
 
 ## Key Data Contracts
 
@@ -750,6 +751,8 @@ closing a tab switches to the neighbor. Pass controlled props only when you need
 | visibleMenuCount | number | 6 | max visible first-level business menus; extras collapse into the "more apps" drawer |
 | customNavMenus | SidebarMenuItem[] | businessMenus.slice(0, visibleMenuCount) | controlled quick-nav; pass only to persist user edits |
 | homeTab / homeContent | MultiTabHomeConfig / ReactNode | - | home tab config + its content (recommended: pass both together) |
+| accountSwitcher | ReactNode | - | multi-account switch panel rendered inside the avatar dropdown (a "切换账号" entry appears when passed; the dropdown switches to the panel in place, Feishu-style two-level popover). Pure UI panel: use `CompanyAccountSwitcher`, wire login logic yourself |
+| userMenuExtra | ReactNode | - | extra entry slot above the avatar dropdown menu items (custom entries without handing the whole dropdown) |
 
 If the generated navigation differs from the official demo, check these props FIRST —
 e.g. more than 6 business menus collapses extras into the "more apps" drawer by default,
@@ -763,7 +766,7 @@ Copy this navigation scaffold verbatim and only rename key/label/path/children. 
 `systemBottomMenus` + `businessMenus[].icon` together — miss any one and the nav differs from the demo.
 
 ```tsx
-import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage, PageTitle, CompanySidebar, CompanyMultiTabs } from '@donglegeyu/company-ui';
+import { AdminLayoutTemplate, SmartListTemplate, CompanyMessage, PageTitle, CompanySidebar, CompanyMultiTabs, CompanyAccountSwitcher } from '@donglegeyu/company-ui';
 import type { SidebarDomain, SidebarMenuItem, SidebarUserInfo, FieldDefinition } from '@donglegeyu/company-ui';
 
 const domains: SidebarDomain[] = [{ id: 1, domainName: '华东大区' }];
