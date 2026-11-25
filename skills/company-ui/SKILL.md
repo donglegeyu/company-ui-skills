@@ -4,17 +4,17 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.13.3
-     updated: 2026-11-23
+     version: 1.13.4
+     updated: 2026-11-25
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.13.3`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.13.4`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
-> **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
+> **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供；`ApprovalActionBar` 审批操作栏族自 2.18.0 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
 > 本 Skill 是 AI Agent 消费组件库的「驾照」——确保生成的代码合规、可运行、品牌一致。
 
@@ -540,18 +540,19 @@ root.render(
 | 图标探索器 | `IconExplorer` | 图标搜索 |
 | IconPark Hook | `useIconPark` | IconPark 图标 Hook |
 
-### 业务模板组件（12 个）
+### 业务模板组件（15 个）
 
 | 组件 | 导出名 | 用途 |
 |---|---|---|
 | 布局模板 | `AdminLayoutTemplate` | ⭐ 后台骨架一步到位（侧边栏+页签+内容区，页签/高亮/间距全托管） |
 | 智能列表模板 | `SmartListTemplate` | 筛选+表格+分页+列设置+视图切换 |
 | 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格（传 `viewEndpoint` 时可挂载视图切换；`viewSwitcherPortalContainer` 可将切换器 portal 提升到外部标题栏） |
-| 左树右表模板 | `TreeTableTemplate` | ⭐ 左树（搜索/虚拟根/节点「更多」下拉操作/底部新增按钮/拖拽调宽）+ 右表（完整复用 `StatisticsListPage`，标题栏由模板统一渲染） |
+| 左树右表模板 | `TreeTableTemplate` | ⭐ 左树（搜索/虚拟根/节点「更多」下拉操作/底部新增按钮或自定义操作区 `treeAddArea`/拖拽调宽）+ 右表（完整复用 `StatisticsListPage`，标题栏由模板统一渲染） |
 | 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏（独立页） |
 | 抽屉表单 | `DrawerFormTemplate` | 抽屉承载新增/编辑，内置 footer 与关闭拦截（440px，遮罩禁关） |
 | 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，结构化头部（name/tags/titleActions/fields）+内容区滚动+多 Tab（440px，遮罩可关，禁用 bordered 描述表格） |
 | 详情页模板 | `DetailPageTemplate` | 信息卡片+标签+多 Tab |
+| 审批操作栏 | `ApprovalActionBar` | 审批详情页统一操作栏（同意/驳回/转办/加签/查看流程按钮集合可配置），点击打开内置操作抽屉，回调 resolve 自动关闭复位；业务侧只注入回调与人员/节点选项，组件不发请求不耦合业务 |
 | 侧边导航 | `CompanySidebar` | 左侧双层导航 |
 | 多页签栏 | `CompanyMultiTabs` | 浏览器式页签栏 |
 | 筛选表单 | `FilterForm` | 独立筛选表单 |
@@ -1551,6 +1552,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.13.4 | 2026-11-25 | 业务模板 14→15（计数 12 为过时值一并修正）：新增 `ApprovalActionBar` 审批操作栏（同意/驳回/转办/加签/查看流程按钮集合可配置 + 内置操作抽屉，`onAgree`/`onReject`/`onTransfer`/`onAddSign` 回调注入，组件不发请求；配套 `ApprovalFlowDrawer` 可独立使用）；`TreeTableTemplate` 新增 `treeAddArea`（左树底部自定义操作区，多按钮并排平分宽度，设置后替代 `onTreeAdd` 默认按钮） |
 | 1.13.3 | 2026-11-23 | 共享组件 15→16：新增 `CompanyAccountSwitcher`（多账号切换面板——账号列表 + 当前项对勾 + 登录更多入口 + 移除按钮，纯 UI 受控，登录/会话逻辑业务侧自接）；`CompanySidebar` / `AdminLayoutTemplate` 头像下拉新增 `accountSwitcher`（传入后出现「切换账号」入口，下拉原地切换为面板，飞书式两级气泡）与 `userMenuExtra`（自定义入口插槽）插槽，`onThemeSettings` 移除 |
 | 1.13.2 | 2026-11-19 | **插槽口径反转**（承接 1.13.1）：`SmartListTemplate` 的 `titleExtra` 装配顺序统一为「分割线 → 视图切换（恒渲染）→ 自定义标签」（与 `StatisticsListPage` / `TreeTableTemplate` 对齐，消除两套装配）；`titleActions` 确立为**长期正式插槽**（非过渡 prop），`titleRightActions` 标注废弃仅兼容保留；工具栏：`StatisticsListPage` / `TreeTableTemplate` 的 `toolbarLeftExtra` 从筛选后移到**内置「列设置/密度/刷新」同组左侧**（业务按钮与内置图标紧挨，搜索框/筛选仍在最左），`toolbarRightExtra` 只放轻控件；速查表 / 两层插槽模型 / 纪律表 / 规则 2·4·5 / StatisticsListPage props 表 / 反模式 27 同步反转；Skill 版本引用行残留 1.13.0 修正为实时一致 |
 | 1.13.1 | 2026-11-19 | ~~插槽纪律补两层插槽模型~~（该版本把 `titleActions` 误标为「过渡 prop 收敛到 `titleExtra`」，方向定反，已在 1.13.2 反转）；保留有效部分：`PageTitle` 本体仅 2 个源码插槽（`titleExtra` / `actions`）的两层模型阐述、各模板映射关系列明、`titleSuffix` 废弃别名、SmartListTemplate 头部迁移到 `PageTitle` 组件渲染 |

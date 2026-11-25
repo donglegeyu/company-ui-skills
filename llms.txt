@@ -1,6 +1,6 @@
 # @donglegeyu/company-ui
 
-> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 16 shared components, 10 business template components. Unified brand tokens, strict usage rules.
+> Enterprise React component library based on Ant Design 6, with custom brand theme (#F95914). 72+ basic components, 16 shared components, 11 business template components. Unified brand tokens, strict usage rules.
 
 ## Installation
 
@@ -553,6 +553,61 @@ export function OrgMembersPage() {
 column-settings gear) — NOT `toolbarActions`, which does NOT exist on this template;
 hand-assembling `CompanyTree` + `StatisticsListPage` side by side.
 
+## ApprovalActionBar — Approval Action Bar (USE FOR approval detail pages)
+
+Provides: a unified action bar for approval detail pages — configurable button set
+(agree / reject / transfer / add-sign / view flow), each button opening a built-in action
+drawer (comment input, reject-node select, user select). A callback resolving closes the
+drawer and resets it automatically. The component NEVER fetches data — inject callbacks
+and option data only. `ApprovalFlowDrawer` (flow steps + timeline) is also exported standalone.
+
+### Core Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| actions | (ApprovalActionType \| ApprovalActionItem)[] | button set & order; strings = built-in actions with default labels, objects = custom label/danger/onClick (an object with onClick and NO type is a pure custom button, e.g. 催办/撤回) |
+| users | ApprovalUserOption[] | person options for transfer/add-sign drawers ({ label, value }) |
+| rejectNodeOptions | ApprovalRejectNodeOption[] | reject-back node options; value `'__start__'` = return to initiator |
+| flow | ApprovalFlowData | flow data for the built-in view-flow drawer (applicantName / startTime / running / steps / timeline) |
+| currentNodeName | string | current approval node name (context for the reject drawer) |
+| onAgree | (payload) => Promise<void> \| void | agree callback (payload.comment) |
+| onReject | (payload) => Promise<void> \| void | reject callback (payload.mode; mode 'node' = return to node via payload.nodeKey) |
+| onTransfer | (payload) => Promise<void> \| void | transfer callback (payload.targetLabel = chosen user) |
+| onAddSign | (payload) => Promise<void> \| void | add-sign callback (payload.targetLabel) |
+| onViewFlow | () => void | custom view-flow handler; when passed, the built-in flow drawer does NOT render |
+
+### Minimal Example
+
+```tsx
+import React from 'react';
+import { CompanyMessage, ApprovalActionBar } from '@donglegeyu/company-ui';
+import type { ApprovalUserOption, ApprovalRejectNodeOption, ApprovalFlowData } from '@donglegeyu/company-ui';
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function ApprovalDetailPage() {
+  return (
+    <ApprovalActionBar
+      users={[{ label: '张三', value: 1 }, { label: '李四', value: 2 }]}
+      rejectNodeOptions={[
+        { label: '退回发起人', value: '__start__' },
+        { label: '部门审批', value: 'dept' },
+      ]}
+      flow={{ applicantName: '赵六', startTime: '2026-11-24 10:00:00', running: true, steps: [], timeline: [] }}
+      onAgree={async (payload) => { await sleep(600); CompanyMessage.success('已同意'); }}
+      onReject={async (payload) => { await sleep(600); CompanyMessage.success('已驳回'); }}
+      onTransfer={async (payload) => { await sleep(600); CompanyMessage.success('已转办'); }}
+      onAddSign={async (payload) => { await sleep(600); CompanyMessage.success('已加签'); }}
+    />
+  );
+}
+```
+
+⚠️ **Common AI mistakes**: the bar is callback-only — do NOT fetch data inside it (inject
+`users` / `rejectNodeOptions` / `flow`, do the request in the onXxx callbacks); custom buttons
+(催办/撤回) are `{ key, label, onClick }` items mixed into `actions` WITHOUT `type`; `'__start__'`
+is the reserved reject value for "return to initiator".
+
 ## Design Tokens
 
 - Brand Primary: #F95914 (vitality orange)
@@ -676,6 +731,7 @@ hand-assembling `CompanyTree` + `StatisticsListPage` side by side.
 - [统计列表页 StatisticsListPage](/template-components/statistics-list-page): Stat cards + advanced filter + table
 - [表单页模板 FormPageTemplate](/template-components/form-page-template): Grouped multi-column form + footer actions
 - [详情页模板 DetailPageTemplate](/template-components/detail-page-template): Info card + tags + multi-tab
+- [审批操作栏 ApprovalActionBar](/template-components/approval-action-bar): Unified action bar for approval detail pages — configurable buttons (agree/reject/transfer/add-sign/view-flow), built-in action drawers, callback-only integration
 - [侧边导航 Sidebar](/template-components/company-sidebar): Dual-layer navigation sidebar
 - [多页签栏 MultiTabs](/template-components/multi-tabs): Browser-style tab bar
 
