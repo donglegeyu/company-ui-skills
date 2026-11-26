@@ -4,15 +4,15 @@ description: "AI Agent 消费 @donglegeyu/company-ui 组件库的总入口。强
 ---
 
 <!-- company-ui-for-agents skill
-     version: 1.13.4
-     updated: 2026-11-25
+     version: 1.13.5
+     updated: 2026-11-26
      source: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/SKILL.md
      remote-version: https://raw.githubusercontent.com/donglegeyu/company-ui-skills/main/skills/company-ui/VERSION
 -->
 
 # Company UI for Agents
 
-> **Skill 版本**：`1.13.4`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
+> **Skill 版本**：`1.13.5`（快照式安装，不随源仓库自动更新——见下方「〇、版本自检」）
 >
 > **版本基准**：`@donglegeyu/company-ui@1.2.47`（AdminLayoutTemplate 自 1.2.36 起提供；内置默认 Logo 自 1.2.39 起提供；`DrawerFormTemplate`/`DrawerDetailTemplate`/`AiActionGuard` 自 1.2.44 起提供；`CompanyChart` 图表组件族自 1.2.47 起提供；`ApprovalActionBar` 审批操作栏族自 2.18.0 起提供），基于 Ant Design 6.x，品牌主色 `#F95914`。
 >
@@ -85,7 +85,7 @@ npm i @donglegeyu/company-ui@latest
 - **新增按钮在 `StatisticsListPage` / `TreeTableTemplate` 里放 `toolbarLeftExtra`**——与内置「列设置/密度/刷新」同组紧挨（搜索框/筛选仍在工具栏最左）
 - `StatisticsListPage` / `TreeTableTemplate` **没有** `toolbarActions` / `toolbarRightActions`，传了不渲染
 - `titleActions` 全家族只放「快速上手」帮助入口，禁放业务按钮（详见「列表页按钮布局纪律」）
-- `TreeTableTemplate` 继承 `StatisticsListPage` 的全部工具栏 props
+- `TreeTableTemplate` 右表为内置 ListPage（复制自 `StatisticsListPage` 独立演进），工具栏 props 与 `StatisticsListPage` 同构（`toolbarLeftExtra` / `toolbarRightExtra` 同名同位）
 
 ***
 
@@ -547,7 +547,7 @@ root.render(
 | 布局模板 | `AdminLayoutTemplate` | ⭐ 后台骨架一步到位（侧边栏+页签+内容区，页签/高亮/间距全托管） |
 | 智能列表模板 | `SmartListTemplate` | 筛选+表格+分页+列设置+视图切换 |
 | 统计列表页 | `StatisticsListPage` | 统计卡片+高级筛选+表格（传 `viewEndpoint` 时可挂载视图切换；`viewSwitcherPortalContainer` 可将切换器 portal 提升到外部标题栏） |
-| 左树右表模板 | `TreeTableTemplate` | ⭐ 左树（搜索/虚拟根/节点「更多」下拉操作/底部新增按钮或自定义操作区 `treeAddArea`/拖拽调宽）+ 右表（完整复用 `StatisticsListPage`，标题栏由模板统一渲染） |
+| 左树右表模板 | `TreeTableTemplate` | ⭐ 左树（搜索/虚拟根/节点「更多」下拉操作/底部新增按钮或自定义操作区 `treeAddArea`/独立滚动/节点文字省略/拖拽调宽）+ 右表（内置 ListPage，与 `StatisticsListPage` 同构，搜索行上方显示选中节点路径面包屑 `showNodeInfo` + 右侧插槽 `nodeInfoExtra`，标题栏由模板统一渲染） |
 | 表单页模板 | `FormPageTemplate` | 分组多列表单+底部操作栏（独立页） |
 | 抽屉表单 | `DrawerFormTemplate` | 抽屉承载新增/编辑，内置 footer 与关闭拦截（440px，遮罩禁关） |
 | 抽屉详情 | `DrawerDetailTemplate` | 抽屉承载只读详情，结构化头部（name/tags/titleActions/fields）+内容区滚动+多 Tab（440px，遮罩可关，禁用 bordered 描述表格） |
@@ -1140,7 +1140,7 @@ export function CheckResultPage() {
 
 ### TreeTableTemplate 速查（左树右表页：组织/分类树过滤列表）
 
-模板提供：左树（内置搜索 + 虚拟根入口 + 节点 hover 增删改操作 + 拖拽调宽）+ 右侧完整统计列表页。**页面标题栏由模板统一渲染**，列表区完整继承 `StatisticsListPageProps`（statisticsCards / filterFields / viewEndpoint / toolbar 插槽等全部可用）。
+模板提供：左树（内置搜索 + 虚拟根入口 + 节点 hover 增删改操作 + 独立滚动区域（滚动条滚动时才显示）+ 节点超长文字省略 + 拖拽调宽）+ 右侧内置 ListPage（复制自 `StatisticsListPage` 独立演进，statisticsCards / filterFields / viewEndpoint / toolbar 插槽等全部可用）。**页面标题栏由模板统一渲染**，列表白卡内搜索行上方显示当前选中节点路径面包屑。
 
 | Props | 类型 | 说明 |
 |---|---|---|
@@ -1150,7 +1150,9 @@ export function CheckResultPage() {
 | onTreeSelect | (key) => void | 节点选中回调（含根节点 key）；**切换节点后业务方自行重新 fetchData** |
 | onNodeAdd / onNodeEdit / onNodeDelete | (key) => void | 节点 hover「更多」下拉菜单（新增/编辑/删除）回调，不传则对应菜单项不显示 |
 | onTreeAdd / treeAddText | () => void / string | 左树底部「新增」按钮回调（不传不显示；树超一屏时吸底）与按钮文案（默认「新增部门」） |
-| treeWidth / minTreeWidth / maxTreeWidth | number | 左树宽度拖拽（默认 232 / 200 / 480） |
+| treeAddArea | ReactNode | 左树底部自定义操作区（多按钮并排平分宽度；设置后替代 onTreeAdd 默认按钮） |
+| showNodeInfo | boolean | 右侧列表搜索行上方显示选中节点路径面包屑（默认 true，按树真实层级、不含根入口层；`nodeInfoExtra` 插槽放状态标签等） |
+| treeWidth / minTreeWidth / maxTreeWidth | number | 左树宽度拖拽（默认 360 / 200 / 480） |
 | viewEndpoint | string | 传入后标题栏右侧显示视图切换器（与 `StatisticsListPage` 同源） |
 
 最小示例：
@@ -1552,6 +1554,7 @@ node scripts/verify-no-danger-delete.mjs src/   # 扫任意业务源码目录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
+| 1.13.5 | 2026-11-26 | `TreeTableTemplate` 右表改内置 ListPage（复制自 `StatisticsListPage` 独立演进，公开导出 `ListPage`/`ListPageProps`）：新增 `showNodeInfo`（选中节点路径面包屑，默认显示）+ `nodeInfoExtra` 插槽（节点信息行右侧放状态标签）；左树独立滚动（滚动条滚动时显示）+ 节点文字省略 + `treeWidth` 默认 232→360；`ViewSwitcher` 保存成功后触发 `onSchemeChange`（宿主页据此应用条件）；`ApprovalActionBar` 流程节点移除 `duration`/`comment` 字段（审批意见由时间线承载）+ 流程抽屉滚动条布局修复 |
 | 1.13.4 | 2026-11-25 | 业务模板 14→15（计数 12 为过时值一并修正）：新增 `ApprovalActionBar` 审批操作栏（同意/驳回/转办/加签/查看流程按钮集合可配置 + 内置操作抽屉，`onAgree`/`onReject`/`onTransfer`/`onAddSign` 回调注入，组件不发请求；配套 `ApprovalFlowDrawer` 可独立使用）；`TreeTableTemplate` 新增 `treeAddArea`（左树底部自定义操作区，多按钮并排平分宽度，设置后替代 `onTreeAdd` 默认按钮） |
 | 1.13.3 | 2026-11-23 | 共享组件 15→16：新增 `CompanyAccountSwitcher`（多账号切换面板——账号列表 + 当前项对勾 + 登录更多入口 + 移除按钮，纯 UI 受控，登录/会话逻辑业务侧自接）；`CompanySidebar` / `AdminLayoutTemplate` 头像下拉新增 `accountSwitcher`（传入后出现「切换账号」入口，下拉原地切换为面板，飞书式两级气泡）与 `userMenuExtra`（自定义入口插槽）插槽，`onThemeSettings` 移除 |
 | 1.13.2 | 2026-11-19 | **插槽口径反转**（承接 1.13.1）：`SmartListTemplate` 的 `titleExtra` 装配顺序统一为「分割线 → 视图切换（恒渲染）→ 自定义标签」（与 `StatisticsListPage` / `TreeTableTemplate` 对齐，消除两套装配）；`titleActions` 确立为**长期正式插槽**（非过渡 prop），`titleRightActions` 标注废弃仅兼容保留；工具栏：`StatisticsListPage` / `TreeTableTemplate` 的 `toolbarLeftExtra` 从筛选后移到**内置「列设置/密度/刷新」同组左侧**（业务按钮与内置图标紧挨，搜索框/筛选仍在最左），`toolbarRightExtra` 只放轻控件；速查表 / 两层插槽模型 / 纪律表 / 规则 2·4·5 / StatisticsListPage props 表 / 反模式 27 同步反转；Skill 版本引用行残留 1.13.0 修正为实时一致 |

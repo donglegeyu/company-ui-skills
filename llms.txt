@@ -506,9 +506,10 @@ export function CheckResultPage() {
 
 ## TreeTableTemplate — Tree-Table List Page (USE FOR tree-filtered list pages)
 
-Provides: left tree (built-in search + virtual root + node hover add/edit/delete + resizable
-width) + right side a FULL `StatisticsListPage` (all its props and slots work). The page title
-bar is rendered by the template.
+Provides: left tree (built-in search + virtual root + node hover add/edit/delete + auto-hide
+scrollbar + long-label ellipsis + resizable width) + right side an internal ListPage (copied
+from `StatisticsListPage`, same contract — all its props and slots work). The page title bar
+is rendered by the template; the selected node path shows as a breadcrumb above the search row.
 
 ### Core Props
 
@@ -517,8 +518,10 @@ bar is rendered by the template.
 | treeData | TreeTableNode[] | left tree data (`key` / `label` / `parent`) |
 | rootNode | TreeTableNode | virtual "all" root, e.g. `{ key: 'all', label: '全部组织' }` |
 | onTreeSelect | (key: string) => void | tree node click |
-| treeWidth / minTreeWidth / maxTreeWidth | number | resizable tree width (default 232 / 200 / 480) |
-| ...StatisticsListPageProps | — | right table inherits the full contract (columns / fetchData / statisticCards / filterFields / toolbar slots) |
+| treeWidth / minTreeWidth / maxTreeWidth | number | resizable tree width (default 360 / 200 / 480) |
+| showNodeInfo | boolean | selected-node path breadcrumb above the search row (default true, real tree levels, excludes virtual root) |
+| nodeInfoExtra | ReactNode | slot right of the breadcrumb — status Tags etc. |
+| ...ListPageProps | — | right table inherits the full contract (columns / fetchData / statisticCards / filterFields / toolbar slots; same shape as StatisticsListPageProps) |
 
 ### Minimal Example
 
